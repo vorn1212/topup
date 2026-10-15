@@ -1,0 +1,8 @@
+# Copy to /etc/cron.d/topup (owner root, mode 644):  sudo install -m 644 -o root -g root deploy/cron/topup.cron /etc/cron.d/topup
+# Fields: minute hour day month weekday USER command
+
+# The Laravel scheduler (order processing, provider sync, ledger check, health heartbeat). Must run every minute.
+* * * * * deploy cd /var/www/topup && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
+
+# Database and picture backup every 6 hours (money data changes all day, so one backup a day is not enough).
+15 */6 * * * deploy bash /var/www/topup/deploy/scripts/backup.sh >> /var/log/topup/backup.log 2>&1

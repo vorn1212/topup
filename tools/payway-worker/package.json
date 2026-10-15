@@ -1,0 +1,9 @@
+{
+  "name": "payway-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Headless worker that opens the ABA PayWay payment link, captures the QR and watches for Paid.",
+  "dependencies": {
+    "playwright": "^1.64.1"
+  }
+}

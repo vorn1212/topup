@@ -1,0 +1,230 @@
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Deposit') }} {{ $deposit->deposit_number }}</h2>
+    </x-slot>
+
+    <style>
+        /* QR overlay: scrolls on very small screens, respects phone notches */
+        .qr-wrap {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: .6rem;
+            padding: max(env(safe-area-inset-top), .75rem) .75rem max(env(safe-area-inset-bottom), .75rem);
+            text-align: center;
+        }
+        /* Desktop / tablet: QR is about 50% of the screen height */
+        .qr-img {
+            display: block;
+            width: auto;
+            height: 50vh;
+            max-width: 92vw;
+            object-fit: contain;
+        }
+        /* Phones (portrait): bigger, up to 92% of the width */
+        @media (max-width: 639px) {
+            .qr-img { height: 60vh; }
+        }
+        /* Phones held sideways: use the available height */
+        @media (orientation: landscape) and (max-height: 520px) {
+            .qr-img { height: 72vh; }
+        }
+        /* Mobile browsers with a moving address bar */
+        @supports (height: 1dvh) {
+            .qr-img { height: 50dvh; }
+            @media (max-width: 639px) { .qr-img { height: 60dvh; } }
+            @media (orientation: landscape) and (max-height: 520px) { .qr-img { height: 72dvh; } }
+        }
+    </style>
+
+    <div class="py-8">
+        <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+
+            @if (session('error'))
+                <div class="rounded-md bg-yellow-50 p-4 text-sm text-yellow-800">{{ __(session('error')) }}</div>
+            @endif
+
+            <div id="deposit-box" data-status-url="{{ $statusUrl }}"
+                 class="bg-white shadow-sm rounded-lg p-6 text-center">
+
+                <p class="text-sm text-gray-500">{{ __('Amount') }}</p>
+                <p class="text-3xl font-bold text-indigo-600 mb-4" id="amount-label">
+                    {{ \App\Support\Money::format((string) $deposit->amount, $deposit->currency) }}
+                </p>
+
+                {{-- Preparing --}}
+                <div id="view-wait">
+                    <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+                    <p class="mt-2 text-sm text-indigo-600">{{ __('Preparing your payment QR. This takes a few seconds…') }}</p>
+                    <p id="queue-note" class="hidden mt-2 text-sm text-indigo-600"></p>
+                </div>
+
+                {{-- Paid --}}
+                <div id="view-paid" class="hidden">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600 text-3xl">✓</div>
+                    <p class="mt-3 text-lg font-semibold text-gray-900">{{ __('Payment received') }}</p>
+                    <p class="text-sm text-gray-600">{{ __('New balance:') }} <strong id="new-balance"></strong></p>
+                    <a href="{{ route('wallet.index') }}" class="mt-4 inline-block text-sm text-indigo-600 hover:underline">{{ __('View wallet') }}</a>
+                </div>
+
+                {{-- Expired / failed --}}
+                <div id="view-expired" class="hidden">
+                    <p class="text-lg font-semibold text-gray-900">{{ __('This payment code expired') }}</p>
+                    <p class="text-sm text-gray-600">{{ __('No money was taken. You can start a new deposit.') }}</p>
+                    <a href="{{ route('wallet.deposit.create') }}" class="mt-4 inline-block rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white">{{ __('Try again') }}</a>
+                </div>
+                <div id="view-failed" class="hidden">
+                    <p class="text-lg font-semibold text-gray-900">{{ __('We could not start the payment') }}</p>
+                    <p class="text-sm text-gray-600">{{ __('Please try again in a moment.') }}</p>
+                    <a href="{{ route('wallet.deposit.create') }}" class="mt-4 inline-block rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white">{{ __('Try again') }}</a>
+                </div>
+
+                {{-- Needs review --}}
+                <div id="view-review" class="hidden">
+                    <p class="text-lg font-semibold text-gray-900">{{ __('We are checking your payment') }}</p>
+                    <p class="text-sm text-gray-600">
+                        {{ __('If you were charged, contact support with deposit number') }}
+                        <strong>{{ $deposit->deposit_number }}</strong>. {{ __('Your wallet is credited once it is confirmed.') }}
+                    </p>
+                </div>
+            </div>
+
+            <a href="{{ route('wallet.deposit.create') }}" class="text-sm text-indigo-600 hover:underline">← {{ __('Back to deposit') }}</a>
+        </div>
+    </div>
+
+    {{-- QR: full-screen overlay so the code can be as large as possible --}}
+    <div id="view-qr" class="hidden fixed inset-0 z-50 overflow-y-auto bg-white">
+        <div class="qr-wrap">
+            <p class="text-base text-gray-600">
+                {{ __('Scan to pay') }}
+                <strong class="text-indigo-600">{{ \App\Support\Money::format((string) $deposit->amount, $deposit->currency) }}</strong>
+            </p>
+            <p class="text-sm text-gray-500">
+                {{ __('Expires in') }} <strong id="countdown" class="text-gray-900">--:--</strong>
+            </p>
+
+            <img id="qr-img" class="qr-img" alt="{{ __('ABA KHQR payment code') }}" />
+
+            <p class="text-xs text-gray-500">
+                {{ __('Raise your screen brightness if the scan is slow.') }}<br>
+                {{ __('Keep this page open. Your wallet is credited automatically after payment.') }}
+            </p>
+            <a href="{{ route('wallet.deposit.create') }}" class="text-xs text-indigo-600 hover:underline">← {{ __('Back') }}</a>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const t = @js([
+                'expired' => __('expired'),
+                'queue' => __('High demand: :count customer(s) ahead of you. Please keep this page open.'),
+            ]);
+            const box = document.getElementById('deposit-box');
+            const statusUrl = box.dataset.statusUrl;
+            const views = {
+                wait: document.getElementById('view-wait'),
+                qr: document.getElementById('view-qr'),
+                paid: document.getElementById('view-paid'),
+                expired: document.getElementById('view-expired'),
+                failed: document.getElementById('view-failed'),
+                review: document.getElementById('view-review'),
+            };
+            const img = document.getElementById('qr-img');
+            const countdownEl = document.getElementById('countdown');
+            let secondsLeft = null;
+            let qrLoaded = false;
+            let ticker = null;
+            let finished = false;
+
+            function show(name) {
+                Object.keys(views).forEach(function (key) {
+                    views[key].classList.toggle('hidden', key !== name);
+                });
+                // The overlay covers the page: stop the page behind it from scrolling.
+                document.body.style.overflow = name === 'qr' ? 'hidden' : '';
+            }
+
+            function tick() {
+                if (secondsLeft === null) return;
+                secondsLeft = Math.max(0, secondsLeft - 1);
+                const m = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+                const s = String(secondsLeft % 60).padStart(2, '0');
+                countdownEl.textContent = m + ':' + s;
+                if (secondsLeft === 0) {
+                    // Hide the code locally; the server keeps watching for a last-second payment.
+                    img.style.visibility = 'hidden';
+                    countdownEl.textContent = t.expired;
+                }
+            }
+
+            async function poll() {
+                try {
+                    const response = await fetch(statusUrl, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin',
+                    });
+                    if (response.ok) {
+                        const body = await response.json();
+                        handle(body.data);
+                    }
+                } catch (e) { /* network hiccup: try again */ }
+
+                if (!finished) setTimeout(poll, 2000);
+            }
+
+            function handle(d) {
+                switch (d.stage) {
+                    case 'queued':
+                    case 'starting':
+                        show('wait');
+                        var note = document.getElementById('queue-note');
+                        if (d.stage === 'queued' && d.queue_position > 1) {
+                            note.textContent = t.queue.replace(':count', d.queue_position - 1);
+                            note.classList.remove('hidden');
+                        } else {
+                            note.classList.add('hidden');
+                        }
+                        break;
+                    case 'qr_ready':
+                        if (d.qr_url) {
+                            if (!qrLoaded) {
+                                img.src = d.qr_url;
+                                qrLoaded = true;
+                                ticker = setInterval(tick, 1000);
+                            }
+                            secondsLeft = d.seconds_left;
+                            show('qr');
+                        }
+                        break;
+                    case 'paid':
+                        document.getElementById('new-balance').textContent = d.balance || '';
+                        show('paid');
+                        stop();
+                        break;
+                    case 'expired':
+                        show('expired');
+                        stop();
+                        break;
+                    case 'failed':
+                        show('failed');
+                        stop();
+                        break;
+                    case 'review':
+                        show('review');
+                        stop();
+                        break;
+                }
+            }
+
+            function stop() {
+                finished = true;
+                if (ticker) clearInterval(ticker);
+            }
+
+            poll();
+        })();
+    </script>
+</x-app-layout>

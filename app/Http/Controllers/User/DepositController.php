@@ -1,0 +1,149 @@
+<?php
+
+namespace App\Http\Controllers\User;
+
+use App\Enums\DepositStatus;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\DepositRequest;
+use App\Jobs\RunPayWayLinkSessionJob;
+use App\Models\WalletDeposit;
+use App\Services\Payment\DepositService;
+use App\Services\Payment\PayWayLinkService;
+use App\Services\Wallet\WalletService;
+use App\Support\ApiResponse;
+use App\Support\Money;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+
+class DepositController extends Controller
+{
+    public function create(Request $request, WalletService $wallets): View
+    {
+        $user = $request->user();
+        $wallet = $wallets->createWallet($user);
+
+        return view('wallet.deposit', [
+            'user' => $user,
+            'wallet' => $wallet,
+            'balance' => $wallets->getBalance($wallet),
+            'deposits' => WalletDeposit::query()
+                ->where('user_id', $user->id)
+                ->orderByDesc('id')
+                ->limit(10)
+                ->get(),
+            'min' => (string) config('topup.deposit.min'),
+            'max' => (string) config('topup.deposit.max'),
+            'gatewayReady' => Route::has('wallet.deposit.store') && filled(config('payway_link.url')),
+        ]);
+    }
+
+    public function store(DepositRequest $request, DepositService $deposits): RedirectResponse
+    {
+        $user = $request->user();
+
+        // One open payment session per user.
+        $open = WalletDeposit::query()
+            ->where('user_id', $user->id)
+            ->where('payment_method', DepositService::METHOD_PAYWAY_LINK)
+            ->whereIn('gateway_stage', [
+                DepositService::STAGE_QUEUED,
+                DepositService::STAGE_STARTING,
+                DepositService::STAGE_QR_READY,
+            ])
+            ->where('expires_at', '>', now())
+            ->latest('id')
+            ->first();
+
+        if ($open) {
+            return redirect()
+                ->route('wallet.deposit.show', $open->deposit_number)
+                ->with('error', 'You already have a deposit in progress. Finish it or wait for it to expire.');
+        }
+
+        $deposit = $deposits->create($user, (string) $request->validated('amount'), DepositService::METHOD_PAYWAY_LINK);
+
+        RunPayWayLinkSessionJob::dispatch($deposit->id);
+
+        return redirect()->route('wallet.deposit.show', $deposit->deposit_number);
+    }
+
+    public function show(Request $request, string $depositNumber): View
+    {
+        $deposit = $this->ownDeposit($request, $depositNumber);
+
+        return view('wallet.deposit-show', [
+            'deposit' => $deposit,
+            'statusUrl' => route('wallet.deposit.status', $deposit->deposit_number),
+        ]);
+    }
+
+    public function status(Request $request, string $depositNumber, DepositService $deposits, WalletService $wallets): JsonResponse
+    {
+        $deposit = $this->ownDeposit($request, $depositNumber);
+
+        // The queue worker may be down: do not leave a never-started deposit "preparing" forever.
+        if ($deposit->gateway_stage === DepositService::STAGE_QUEUED && $deposit->expires_at?->isPast()) {
+            $deposit = $deposits->transition($deposit->id, DepositStatus::Expired, [
+                'gateway_stage' => DepositService::STAGE_EXPIRED,
+            ]);
+        }
+
+        $qrValid = $deposit->gateway_stage === DepositService::STAGE_QR_READY
+            && $deposit->qr_expires_at?->isFuture();
+
+        // How many customers are waiting for a free worker ahead of this one.
+        $position = null;
+        if ($deposit->gateway_stage === DepositService::STAGE_QUEUED) {
+            $position = 1 + WalletDeposit::query()
+                ->where('payment_method', DepositService::METHOD_PAYWAY_LINK)
+                ->where('gateway_stage', DepositService::STAGE_QUEUED)
+                ->where('expires_at', '>', now())
+                ->where('id', '<', $deposit->id)
+                ->count();
+        }
+
+        return ApiResponse::success([
+            'status' => $deposit->status->value,
+            'stage' => $deposit->gateway_stage,
+            'amount' => Money::format((string) $deposit->amount, $deposit->currency),
+            'qr_url' => $qrValid ? route('wallet.deposit.qr', $deposit->deposit_number) : null,
+            'seconds_left' => $qrValid ? max(0, (int) now()->diffInSeconds($deposit->qr_expires_at, false)) : null,
+            'queue_position' => $position,
+            'balance' => $deposit->status === DepositStatus::Paid
+                ? Money::format($wallets->getBalance($deposit->wallet), $deposit->currency)
+                : null,
+        ]);
+    }
+
+    public function qr(Request $request, string $depositNumber): BinaryFileResponse|Response
+    {
+        $deposit = $this->ownDeposit($request, $depositNumber);
+
+        abort_unless(
+            $deposit->gateway_stage === DepositService::STAGE_QR_READY && $deposit->qr_expires_at?->isFuture(),
+            404
+        );
+
+        $path = PayWayLinkService::qrPath($deposit->deposit_number);
+        abort_unless(Storage::disk('local')->exists($path), 404);
+
+        return response()->file(Storage::disk('local')->path($path), [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'no-store, private',
+        ]);
+    }
+
+    private function ownDeposit(Request $request, string $depositNumber): WalletDeposit
+    {
+        return WalletDeposit::query()
+            ->where('user_id', $request->user()->id)
+            ->where('deposit_number', $depositNumber)
+            ->firstOrFail();
+    }
+}
