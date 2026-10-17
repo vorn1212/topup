@@ -151,7 +151,7 @@ class SiteTest extends TestCase
             ->assertSee('Asia')
             ->assertSee('Europe')
             ->assertSee('60 Genesis Crystals')
-             ->assertSee('$1.1385')
+             ->assertSee('$1.14')
             ->assertSee('to place an order')
             ->assertSessionHas('url.intended', url("/games/genshin-impact/top-up?product={$product->id}"));
     }

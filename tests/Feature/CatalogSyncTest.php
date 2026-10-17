@@ -130,7 +130,7 @@ class CatalogSyncTest extends TestCase
 
         $percent = $percent->fresh();
         $this->assertSame('4.5000', $percent->provider_cost);
-        $this->assertSame('5.6250', $percent->selling_price);
+        $this->assertSame('5.6300', $percent->selling_price);
 
         $this->assertDatabaseHas('product_price_histories', [
             'product_id' => $fixed->id,

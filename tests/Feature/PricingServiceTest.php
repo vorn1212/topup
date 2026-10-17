@@ -33,7 +33,7 @@ class PricingServiceTest extends TestCase
         $this->assertSame('1.0000', PricingService::calculate('0.80', MarkupType::FixedPrice, '1.00'));
         $this->assertSame('1.0000', PricingService::calculate('0.80', MarkupType::FixedMarkup, '0.20'));
         $this->assertSame('1.0000', PricingService::calculate('0.80', MarkupType::PercentMarkup, '25'));
-        $this->assertSame('0.3666', PricingService::calculate('0.3333', MarkupType::PercentMarkup, '10')); // rounds half up
+        $this->assertSame('0.3700', PricingService::calculate('0.3333', MarkupType::PercentMarkup, '10')); // rounds half up to cents
         $this->assertSame('0.7200', PricingService::calculate('0.80', MarkupType::PercentMarkup, '-10'));
     }
 

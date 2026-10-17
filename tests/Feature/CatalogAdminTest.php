@@ -361,6 +361,6 @@ class CatalogAdminTest extends TestCase
             'provider_cost' => '0.85', 'markup_type' => MarkupType::PercentMarkup->value, 'markup_value' => '25',
         ])->assertRedirect();
 
-        $this->assertSame('1.0625', Product::firstOrFail()->selling_price);
+        $this->assertSame('1.0600', Product::firstOrFail()->selling_price);
     }
 }

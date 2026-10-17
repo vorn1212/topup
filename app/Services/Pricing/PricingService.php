@@ -29,8 +29,8 @@ class PricingService
 
     // ---------------------------------------------------------------- pure calculation
 
-    /**
-     * selling = f(cost, mode, value), rounded half-up to 4 decimals.
+        /**
+     * selling = f(cost, mode, value), rounded half-up to WHOLE CENTS (stored with 4 decimals, e.g. 1.0600).
      *   fixed_price    : value
      *   fixed_markup   : cost + value
      *   percent_markup : cost * (1 + value / 100)
@@ -40,11 +40,14 @@ class PricingService
         self::assertCost($cost);
         self::assertValue($type, $value);
 
-        return match ($type) {
+        $price = match ($type) {
             MarkupType::FixedPrice => Money::normalize($value),
             MarkupType::FixedMarkup => Money::add($cost, $value),
             MarkupType::PercentMarkup => self::percentOf($cost, bcadd('100', $value, 4)),
         };
+
+        // Customers pay whole cents, so what they see is exactly what is charged.
+        return Money::normalize(Money::round($price, 2));
     }
 
     /** amount * factor / 100, rounded half-up to 4 decimals. (factor 125 means +25%) */
