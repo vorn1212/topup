@@ -31,6 +31,8 @@ class UpdateProductRequest extends FormRequest
             'status' => ['required', Rule::enum(CatalogStatus::class)],
             'is_available' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:99999'],
+            'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:1024', 'dimensions:min_width=32,min_height=32'],
+            'remove_icon' => ['nullable', 'boolean'],
         ];
     }
 }

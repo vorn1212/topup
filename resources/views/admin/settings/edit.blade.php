@@ -97,6 +97,53 @@
                     </div>
                 </div>
 
+                {{-- Home page banner --}}
+                <div class="bg-white shadow-sm sm:rounded-lg p-5 space-y-4">
+                    <h3 class="font-semibold text-gray-800">Home page banner character</h3>
+
+                    <div class="flex h-44 items-center justify-center rounded-md border border-dashed border-gray-300 bg-slate-900 p-2">
+                        @if ($settings->bannerUrl())
+                            <img src="{{ $settings->bannerUrl() }}" alt="Current banner picture" class="h-40 w-auto object-contain">
+                        @else
+                            <div class="h-40 w-40">@include('site._banner-character')</div>
+                        @endif
+                    </div>
+                    <input id="banner" name="banner" type="file" accept="image/png,image/jpeg,image/webp"
+                           class="block w-full text-sm text-gray-700">
+                    <p class="text-xs text-gray-500">PNG, JPG or WebP, up to 2 MB and 2400 x 2400 px. A transparent PNG of a character looks best. Without an upload, the built-in boy gamer is shown.</p>
+                    @if ($settings->bannerUrl())
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" name="remove_banner" value="1" class="rounded border-gray-300"> Remove my picture and show the built-in boy gamer
+                        </label>
+                    @endif
+                </div>
+
+                {{-- Contact links --}}
+                <div class="bg-white shadow-sm sm:rounded-lg p-5 space-y-4">
+                    <h3 class="font-semibold text-gray-800">Contact Us links</h3>
+
+                    <div>
+                        <label for="telegram_url" class="block text-sm font-medium text-gray-700">Telegram link</label>
+                        <input id="telegram_url" name="telegram_url" type="url" maxlength="200"
+                               value="{{ old('telegram_url', $settings->value('telegram_url')) }}"
+                               placeholder="{{ \App\Services\SiteSettings::EXAMPLE_TELEGRAM }}"
+                               class="mt-1 block w-full max-w-xl rounded-md border-gray-300 shadow-sm">
+                    </div>
+
+                    <div>
+                        <label for="facebook_url" class="block text-sm font-medium text-gray-700">Facebook page link</label>
+                        <input id="facebook_url" name="facebook_url" type="url" maxlength="250"
+                               value="{{ old('facebook_url', $settings->value('facebook_url')) }}"
+                               placeholder="{{ \App\Services\SiteSettings::EXAMPLE_FACEBOOK }}"
+                               class="mt-1 block w-full max-w-xl rounded-md border-gray-300 shadow-sm">
+                    </div>
+
+                    <p class="text-xs text-gray-500">
+                        The grey text is only an example. A button shows on the website (Contact page, footer) only after you save a real link.
+                        Leave a box empty to hide that button. Telegram links must start with https://t.me/ and Facebook links with https://www.facebook.com/.
+                    </p>
+                </div>
+
                 {{-- Colours --}}
                 <div class="bg-white shadow-sm sm:rounded-lg p-5 space-y-5">
                     <h3 class="font-semibold text-gray-800">Colours</h3>

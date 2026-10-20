@@ -28,15 +28,13 @@
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             @forelse ($products as $product)
-                <div class="flex items-center justify-between rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200">
-                    <div>
+                <div class="flex items-center justify-between gap-3 rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200">
+                    <div class="min-w-0">
                         <p class="font-medium text-gray-900">{{ $product->name }}</p>
                         @if (filled($product->description))
                             <p class="text-xs text-gray-500">{{ $product->description }}</p>
                         @endif
-                    </div>
-                    <div class="text-right">
-                        <p class="font-semibold text-indigo-600">{{ \App\Support\Money::display((string) $product->selling_price, $product->currency) }}</p>
+                        <p class="mt-1 font-semibold text-indigo-600">{{ \App\Support\Money::display((string) $product->selling_price, $product->currency) }}</p>
                         @if ($product->is_available)
                             <a href="{{ route('games.topup', [$game->slug, 'product' => $product->id]) }}"
                                class="mt-1 inline-block rounded bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500">{{ __('Top up') }}</a>
@@ -44,6 +42,7 @@
                             <span class="mt-1 inline-block text-xs text-gray-400">{{ __('Unavailable') }}</span>
                         @endif
                     </div>
+                    <x-package-icon :url="$product->iconUrl($game)" class="h-16 w-16 shrink-0" />
                 </div>
             @empty
                 <p class="col-span-full text-sm text-gray-500">{{ __('Packages are coming soon.') }}</p>

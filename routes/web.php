@@ -36,6 +36,8 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::get('/sitemap.xml', [SitemapController::class, 'sitemap'])->name('sitemap');
     Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
 
+    Route::view('/contact', 'site.contact')->name('contact');
+
         // ---- Sign in with Google (guests only; the pages are hidden until Google is set up in .env) ----
     Route::middleware(['guest', 'throttle:20,1'])->group(function () {
         Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('auth.google');

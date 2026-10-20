@@ -9,10 +9,10 @@ use InvalidArgumentException;
 use Throwable;
 
 /**
- * The shop's look: name, logo, favicon and colours, edited by the super admin.
+ * The shop's look: name, logo, favicon, home banner picture, contact links and colours, edited by the super admin.
  *
  * Safety rules:
- *  - every value is checked again when it is READ, so a hand-edited database row can never inject CSS or a file path;
+ *  - every value is checked again when it is READ, so a hand-edited database row can never inject CSS, a file path or a bad link;
  *  - if the table does not exist yet (before "php artisan migrate") the defaults are used and nothing breaks.
  */
 class SiteSettings
@@ -32,10 +32,20 @@ class SiteSettings
 
     public const FILE_PATTERN = '#^branding/[A-Za-z0-9]{20,64}\.(png|jpg|jpeg|webp|ico)$#';
 
+    /** Only https links to Telegram / Facebook are accepted, so a contact button can never point somewhere else. */
+    public const TELEGRAM_PATTERN = '#^https://(t\.me|telegram\.me)/[A-Za-z0-9_+\-./]{2,100}$#';
+
+    public const FACEBOOK_PATTERN = '#^https://((www|m|web)\.)?(facebook\.com|fb\.com|fb\.me|m\.me)/[A-Za-z0-9_.\-/?=&%+]{1,150}$#';
+
+    /** Shown as grey hints in the admin form. Links equal to these are treated as "not set yet" and stay hidden. */
+    public const EXAMPLE_TELEGRAM = 'https://t.me/your_telegram';
+
+    public const EXAMPLE_FACEBOOK = 'https://www.facebook.com/your.page';
+
     private const COLOR_PATTERN = '/^#[0-9a-fA-F]{6}$/';
 
     private const ALLOWED = [
-        'site_name', 'logo_path', 'favicon_path',
+        'site_name', 'logo_path', 'favicon_path', 'banner_path', 'telegram_url', 'facebook_url',
         'color_primary', 'color_page', 'color_nav', 'color_header', 'color_panel', 'color_footer', 'color_card', 'color_accent',
     ];
 
@@ -134,6 +144,35 @@ class SiteSettings
         return $this->url($this->path('favicon'));
     }
 
+    /** The picture uploaded for the home page banner, or null to show the built-in boy gamer. */
+    public function bannerUrl(): ?string
+    {
+        return $this->url($this->path('banner'));
+    }
+
+    /** The Telegram link, or null when none (or only the example) has been saved. */
+    public function telegramUrl(): ?string
+    {
+        return $this->link('telegram_url', self::TELEGRAM_PATTERN, self::EXAMPLE_TELEGRAM);
+    }
+
+    /** The Facebook page link, or null when none (or only the example) has been saved. */
+    public function facebookUrl(): ?string
+    {
+        return $this->link('facebook_url', self::FACEBOOK_PATTERN, self::EXAMPLE_FACEBOOK);
+    }
+
+    public function hasContact(): bool
+    {
+        return $this->telegramUrl() !== null || $this->facebookUrl() !== null;
+    }
+
+    /** The raw saved text of a setting, for filling the admin form (never used on public pages). */
+    public function value(string $key): ?string
+    {
+        return in_array($key, self::ALLOWED, true) ? $this->raw($key) : null;
+    }
+
     /** Everything stored, for the audit log. @return array<string, string|null> */
     public function snapshot(): array
     {
@@ -190,6 +229,19 @@ class SiteSettings
     public function applyToConfig(): void
     {
         config(['app.name' => $this->siteName()]);
+    }
+
+    private function link(string $key, string $pattern, string $example): ?string
+    {
+        $value = $this->raw($key);
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return ($value !== $example && preg_match($pattern, $value) === 1) ? $value : null;
     }
 
     private function raw(string $key): ?string

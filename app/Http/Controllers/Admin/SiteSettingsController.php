@@ -14,11 +14,15 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * Website name, logo, favicon and colours. Super admin only (settings.manage); every change is audited.
+ * Website name, logo, favicon, home banner picture, contact links and colours.
+ * Super admin only (settings.manage); every change is audited.
  */
 class SiteSettingsController extends Controller
 {
     private const EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'ico'];
+
+    /** Pictures that can be uploaded or removed here. */
+    private const PICTURES = ['logo', 'favicon', 'banner'];
 
     public function edit(SiteSettings $settings): View
     {
@@ -35,10 +39,16 @@ class SiteSettingsController extends Controller
             $values['color_'.$key] = strtolower((string) $data['color_'.$key]);
         }
 
+        // An empty box removes the link (null), so that button disappears from the website.
+        foreach (['telegram_url', 'facebook_url'] as $key) {
+            $link = trim((string) ($data[$key] ?? ''));
+            $values[$key] = $link !== '' ? $link : null;
+        }
+
         $staleFiles = [];
         $newFiles = [];
 
-        foreach (['logo', 'favicon'] as $which) {
+        foreach (self::PICTURES as $which) {
             $current = $settings->path($which);
 
             if ($request->hasFile($which)) {
@@ -80,7 +90,7 @@ class SiteSettingsController extends Controller
     {
         $old = $settings->snapshot();
 
-        foreach (['logo', 'favicon'] as $which) {
+        foreach (self::PICTURES as $which) {
             $path = $settings->path($which);
             if ($path !== null) {
                 Storage::disk('public')->delete($path);

@@ -60,6 +60,16 @@ class Game extends Model
         return $this->logo ? asset('storage/'.$this->logo) : null;
     }
 
+    public const PACKAGE_ICON_PATTERN = '#^games/package-icons/[A-Za-z0-9]{40}\.png$#';
+
+    /** The default icon shown on every package of this game that has no icon of its own. */
+    public function packageIconUrl(): ?string
+    {
+        return is_string($this->package_icon) && preg_match(self::PACKAGE_ICON_PATTERN, $this->package_icon) === 1
+            ? asset('storage/'.$this->package_icon)
+            : null;
+    }
+
     public function bannerUrl(): ?string
     {
         return $this->banner ? asset('storage/'.$this->banner) : null;

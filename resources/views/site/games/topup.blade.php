@@ -112,7 +112,7 @@
                             <span class="flex items-center gap-2">
                                 <input type="radio" name="product_id" value="{{ $product->id }}" x-model="selected" required
                                        @checked($selectedId === $product->id) @disabled(! $product->is_available) class="text-indigo-600">
-                                <span class="text-sm text-gray-900">{{ $product->name }}</span>
+                                <x-package-icon :url="$product->iconUrl($game)" class="h-8 w-8 shrink-0" /><span class="text-sm text-gray-900">{{ $product->name }}</span>
                             </span>
                             <span class="text-sm font-semibold text-indigo-600">
                                 {{ $product->is_available ? \App\Support\Money::display((string) $product->selling_price, $product->currency) : __('Unavailable') }}

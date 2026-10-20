@@ -49,7 +49,7 @@
 
             {{-- Details --}}
             <form method="POST"
-                  action="{{ $editing ? route('admin.products.update', $product) : route('admin.products.store') }}"
+                  action="{{ $editing ? route('admin.products.update', $product) : route('admin.products.store') }}" enctype="multipart/form-data"
                   class="bg-white shadow-sm sm:rounded-lg p-6 space-y-4"
                   @if (! $editing)
                       x-data='{ cost: @js($cost), type: @js($type), value: @js($value),
@@ -125,6 +125,30 @@
                     </div>
                 </div>
 
+                {{-- Package icon (existing products) --}}
+                @if ($editing)
+                    <div class="border-t pt-4">
+                        <label class="block text-sm font-medium text-gray-700" for="icon">Package icon</label>
+                        <div class="mt-2 flex items-center gap-4">
+                            <x-package-icon :url="$product->iconUrl()" class="h-16 w-16 rounded-lg bg-gray-100 p-1" />
+                            <p class="text-xs text-gray-500">
+                                @if ($product->hasOwnIcon())
+                                    This product has its own icon.
+                                @elseif ($product->iconUrl())
+                                    Using the game's default icon (set it on the game's page).
+                                @else
+                                    Using the built-in diamond icon.
+                                @endif
+                            </p>
+                        </div>
+                        <input id="icon" name="icon" type="file" accept=".jpg,.jpeg,.png,.webp" class="mt-2 block w-full text-sm" />
+                        <p class="mt-1 text-xs text-gray-500">JPG, PNG or WEBP, max 1 MB. A PNG with a transparent background looks best. Press "Save details" to apply.</p>
+                        @if ($product->hasOwnIcon())
+                            <label class="mt-1 block text-xs text-gray-600"><input type="checkbox" name="remove_icon" value="1" class="rounded border-gray-300"> Remove this product's own icon</label>
+                        @endif
+                        <x-input-error :messages="$errors->get('icon')" class="mt-1" />
+                    </div>
+                @endif
                 {{-- Price block for NEW products only --}}
                 @unless ($editing)
                     <div class="border-t pt-4 space-y-4">

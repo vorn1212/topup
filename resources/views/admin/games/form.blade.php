@@ -116,6 +116,21 @@
                     </div>
                 </div>
 
+                @if ($editing)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="package_icon">Default package icon <span class="text-gray-400">(optional)</span></label>
+                        <div class="my-2 flex items-center gap-3">
+                            <x-package-icon :url="$game->packageIconUrl()" class="h-14 w-14 rounded bg-gray-100 p-1" />
+                            <p class="text-xs text-gray-500">Shown on every package of this game that has no icon of its own. Without it, the built-in diamond is shown.</p>
+                        </div>
+                        @if ($game->packageIconUrl())
+                            <label class="text-xs text-gray-600"><input type="checkbox" name="remove_package_icon" value="1" class="rounded border-gray-300"> Remove the default icon</label>
+                        @endif
+                        <input id="package_icon" name="package_icon" type="file" accept=".jpg,.jpeg,.png,.webp" class="mt-1 block w-full text-sm" />
+                        <p class="mt-1 text-xs text-gray-500">JPG, PNG or WEBP, max 1 MB. A PNG with a transparent background looks best.</p>
+                        <x-input-error :messages="$errors->get('package_icon')" class="mt-1" />
+                    </div>
+                @endif
                 <div class="flex items-center gap-3">
                     <button class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">Save</button>
                     <a href="{{ route('admin.games.index') }}" class="text-sm text-gray-600 hover:underline">Cancel</a>

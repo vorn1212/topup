@@ -36,6 +36,27 @@ class Product extends Model
         ];
     }
 
+    /** Own icons are stored here by the admin upload only; the path is checked again when it is read. */
+    public const ICON_PATTERN = '#^games/product-icons/[A-Za-z0-9]{40}\.png$#';
+
+    public function hasOwnIcon(): bool
+    {
+        return is_string($this->icon) && preg_match(self::ICON_PATTERN, $this->icon) === 1;
+    }
+
+    /**
+     * The picture for this package: its own icon, else the game's default package icon, else null
+     * (the page then shows the built-in diamond). Pass $game when it is already loaded.
+     */
+    public function iconUrl(?Game $game = null): ?string
+    {
+        if ($this->hasOwnIcon()) {
+            return asset('storage/'.$this->icon);
+        }
+
+        return ($game ?? $this->game)?->packageIconUrl();
+    }
+
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);

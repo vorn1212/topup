@@ -31,7 +31,9 @@ class GameController extends Controller
 
     private const BANNER = ['games/banners', 1600, 600, 'jpeg'];
 
-    private const NON_COLUMNS = ['logo', 'banner', 'remove_logo', 'remove_banner'];
+    private const PACKAGE_ICON = ['games/package-icons', 256, 256, 'png'];
+
+    private const NON_COLUMNS = ['logo', 'banner', 'remove_logo', 'remove_banner', 'package_icon', 'remove_package_icon'];
 
     public function index(Request $request): View
     {
@@ -152,6 +154,11 @@ class GameController extends Controller
 
     public function update(UpdateGameRequest $request, Game $game, ImageUploader $uploader, AuditService $audit): RedirectResponse
     {
+        $request->validate([
+            'package_icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:1024', 'dimensions:min_width=32,min_height=32'],
+            'remove_package_icon' => ['nullable', 'boolean'],
+        ]);
+
         $data = $request->validated();
         $old = [
             'name' => $game->name,
@@ -161,6 +168,7 @@ class GameController extends Controller
         ];
         $oldLogo = $game->logo;
         $oldBanner = $game->banner;
+        $oldPackageIcon = $game->package_icon;
         $storedFiles = [];
 
         try {
@@ -184,6 +192,14 @@ class GameController extends Controller
                 $game->banner = null;
             }
 
+            if ($request->hasFile('package_icon')) {
+                $path = $this->storeImage($uploader, $request->file('package_icon'), self::PACKAGE_ICON, 'package_icon');
+                $storedFiles[] = $path;
+                $game->package_icon = $path;
+            } elseif ($request->boolean('remove_package_icon')) {
+                $game->package_icon = null;
+            }
+
             $game->save();
         } catch (Throwable $e) {
             foreach ($storedFiles as $path) {
@@ -198,6 +214,9 @@ class GameController extends Controller
         }
         if ($oldBanner && $oldBanner !== $game->banner) {
             $uploader->delete($oldBanner);
+        }
+        if ($oldPackageIcon && $oldPackageIcon !== $game->package_icon) {
+            $uploader->delete($oldPackageIcon);
         }
 
         $audit->log('game.updated', $game, $old, [
@@ -231,10 +250,12 @@ class GameController extends Controller
 
         $logo = $game->logo;
         $banner = $game->banner;
+        $packageIcon = $game->package_icon;
         $game->delete(); // game_fields are removed by the foreign key cascade
 
         $uploader->delete($logo);
         $uploader->delete($banner);
+        $uploader->delete($packageIcon);
 
         return redirect()->route('admin.games.index')->with('status', 'Game deleted.');
     }

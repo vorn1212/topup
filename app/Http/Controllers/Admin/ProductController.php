@@ -12,6 +12,7 @@ use App\Models\Game;
 use App\Models\Product;
 use App\Models\ProductPriceHistory;
 use App\Services\AuditService;
+use App\Services\Catalog\ImageUploader;
 use App\Services\Pricing\PricingService;
 use App\Support\NumberGenerator;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +20,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use InvalidArgumentException;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ProductController extends Controller
 {
@@ -123,7 +126,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(UpdateProductRequest $request, Product $product, AuditService $audit): RedirectResponse
+    public function update(UpdateProductRequest $request, Product $product, AuditService $audit, ImageUploader $uploader): RedirectResponse
     {
         $data = $request->validated();
         $old = [
@@ -141,7 +144,38 @@ class ProductController extends Controller
         ]);
         $product->provider_offer_id = filled($data['provider_offer_id'] ?? null) ? $data['provider_offer_id'] : null;
         $product->is_available = $request->boolean('is_available');
-        $product->save();
+
+        // Package icon: upload a new one or remove the current one.
+        $oldIcon = $product->icon;
+        $newIcon = null;
+
+        try {
+            if ($request->hasFile('icon')) {
+                try {
+                    $newIcon = $uploader->store($request->file('icon'), 'games/product-icons', 256, 256, 'png');
+                } catch (InvalidArgumentException $e) {
+                    throw ValidationException::withMessages(['icon' => $e->getMessage()]);
+                }
+                $product->icon = $newIcon;
+            } elseif ($request->boolean('remove_icon')) {
+                $product->icon = null;
+            }
+
+            $product->save();
+        } catch (Throwable $e) {
+            if ($newIcon !== null) {
+                $uploader->delete($newIcon);
+            }
+
+            throw $e;
+        }
+
+        if ($oldIcon && $oldIcon !== $product->icon) {
+            $uploader->delete($oldIcon);
+            $audit->log('product.icon_changed', $product, ['icon' => $oldIcon], ['icon' => $product->icon]);
+        } elseif ($newIcon !== null) {
+            $audit->log('product.icon_changed', $product, ['icon' => null], ['icon' => $product->icon]);
+        }
 
         $audit->log('product.updated', $product, $old, [
             'name' => $product->name,

@@ -5,6 +5,7 @@
         ['label' => 'Games', 'route' => 'games.index', 'active' => 'games.*'],
         ['label' => 'Wallet', 'route' => 'wallet.index', 'active' => 'wallet.*'],
         ['label' => 'Orders', 'route' => 'orders.index', 'active' => 'orders.*'],
+        ['label' => 'Contact', 'route' => 'contact', 'active' => 'contact'],
         ['label' => 'Notifications', 'route' => 'notifications.index', 'active' => 'notifications.*'],
     ];
 

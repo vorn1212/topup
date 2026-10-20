@@ -7,6 +7,8 @@
     'ogType' => 'website',
 ])
 
+@inject('siteSettings', 'App\Services\SiteSettings')
+
 @php
     $siteName = config('app.name');
     $pageTitle = filled($title) ? $title.' | '.$siteName : $siteName.' | '.__('Game Top-Up');
@@ -48,10 +50,13 @@
 
     @include('layouts._fonts')
     @include('layouts._branding')
+    @include('layouts._gaming')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="flex min-h-screen flex-col bg-gray-100 site-bg font-sans text-gray-900 antialiased">
+<body class="gaming-bg flex min-h-screen flex-col bg-gray-100 site-bg font-sans text-gray-900 antialiased">
+    <div class="gg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
+
     <header class="border-b bg-white site-nav">
         <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
             <a href="{{ route('home') }}" class="flex items-center"><x-brand-logo img-class="h-9 w-auto" text-class="text-lg font-bold" /></a>
@@ -59,6 +64,7 @@
             <nav class="flex items-center gap-3 text-sm sm:gap-4">
                 <x-language-switcher />
                 <a href="{{ route('games.index') }}" class="nav-ink-link text-gray-700 hover:text-indigo-600">{{ __('Games') }}</a>
+                <a href="{{ route('contact') }}" class="nav-ink-link hidden text-gray-700 hover:text-indigo-600 sm:inline">{{ __('Contact') }}</a>
                 @auth
                     <a href="{{ route('wallet.index') }}" class="nav-ink-link text-gray-700 hover:text-indigo-600">{{ __('Wallet') }}</a>
                     <a href="{{ route('dashboard') }}"
@@ -77,7 +83,15 @@
     </main>
 
     <footer class="site-footer border-t bg-white py-6 text-center text-xs text-gray-500">
-        &copy; {{ date('Y') }} {{ $siteName }}. {{ __('All rights reserved.') }}
+        @if ($siteSettings->hasContact())
+            <div class="mb-4">
+                <div class="mb-2 text-sm font-semibold text-gray-700">{{ __('Contact Us') }}</div>
+                @include('site._contact-buttons')
+            </div>
+        @else
+            <a href="{{ route('contact') }}" class="mb-3 inline-block text-sm text-indigo-600 hover:underline">{{ __('Contact Us') }}</a>
+        @endif
+        <div>&copy; {{ date('Y') }} {{ $siteName }}. {{ __('All rights reserved.') }}</div>
     </footer>
 </body>
 </html>
