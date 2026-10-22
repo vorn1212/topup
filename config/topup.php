@@ -19,4 +19,12 @@ return [
         'admin_email' => env('SEED_ADMIN_EMAIL'),
         'support_email' => env('SEED_SUPPORT_EMAIL'),
     ],
+    /*
+    | E-mail notifications. Notifications always appear on the website; when this is true
+    | they are also sent by e-mail (needs a working MAIL_* setup). Set NOTIFY_BY_MAIL in .env.
+    */
+    'notifications' => [
+        'mail' => (bool) env('NOTIFY_BY_MAIL', false),
+    ],
+
 ];
