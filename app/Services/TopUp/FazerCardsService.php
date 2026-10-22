@@ -215,6 +215,8 @@ class FazerCardsService implements TopUpProvider
             throw new InvalidArgumentException('The idempotency key must be 1-255 characters.');
         }
 
+        $fields = $this->orderFields($categoryId, $fields);
+
         $body = $this->send(
             'POST',
             '/topups/order',
@@ -407,6 +409,25 @@ class FazerCardsService implements TopUpProvider
                 'label' => Str::limit(trim((string) ($field['label'] ?? $key)), 80, ''),
                 'type' => in_array($type, ['text', 'number', 'select'], true) ? $type : 'text',
             ];
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Mobile Legends orders name the server field "server_id", while the player check uses "zone_id".
+     * Rename it for the order only (never overwrite a server_id that is already there).
+     *
+     * @param  array<string,mixed>  $fields
+     * @return array<string,mixed>
+     */
+    private function orderFields(string $categoryId, array $fields): array
+    {
+        if (str_starts_with($categoryId, 'mobile_legends')
+            && array_key_exists('zone_id', $fields)
+            && ! array_key_exists('server_id', $fields)) {
+            $fields['server_id'] = $fields['zone_id'];
+            unset($fields['zone_id']);
         }
 
         return $fields;
