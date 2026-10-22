@@ -364,7 +364,7 @@ class FazerCardsService implements TopUpProvider
             : "FazerCards returned HTTP {$status}.";
         $code = is_array($body) && isset($body['code']) && is_scalar($body['code']) ? (string) $body['code'] : null;
 
-        Log::warning('FazerCards request failed', ['method' => $method, 'path' => $path, 'status' => $status, 'code' => $code]);
+        Log::warning('FazerCards request failed', ['method' => $method, 'path' => $path, 'status' => $status, 'code' => $code, 'message' => $message]);
 
         throw new ProviderException($message, $status, $code);
     }
