@@ -16,7 +16,7 @@ class AuthPagesButtonsTest extends TestCase
             ->assertSee('class="auth-btn-outline"', false)
             ->assertSee('href="'.route('register').'"', false)
             ->assertSee('auth-card', false)
-            ->assertSee('color: #0f172a !important', false);
+            ->assertSee('color: #000 !important', false);
     }
 
     public function test_register_page_has_a_login_button(): void

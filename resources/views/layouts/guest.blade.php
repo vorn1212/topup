@@ -15,9 +15,10 @@
 
         <style>
             /* Login / register / password pages: readable on the dark theme whatever colours are saved in Site settings. */
-            .auth-card input:not([type=checkbox]):not([type=radio]) { background: #fff !important; color: #0f172a !important; caret-color: #0f172a; }
+            .auth-card input:not([type=checkbox]):not([type=radio]) { background: #fff !important; color: #000 !important; caret-color: #000; }
             .auth-card input::placeholder { color: #64748b !important; }
-            .auth-card input + button, .auth-card input ~ button { color: #475569 !important; }
+            .auth-card input + button, .auth-card input ~ button { background: #fff !important; color: #000 !important; }
+            .auth-card input + button *, .auth-card input ~ button *, .auth-card button[type=button] svg, .auth-card button[type=button] svg * { color: #000 !important; }
             .auth-card .auth-link { color: #7dd3fc !important; text-decoration: underline; }
             .auth-card .auth-link:hover { color: #fff !important; }
             .auth-card .auth-btn { background: linear-gradient(135deg, #0ea5e9, #2563eb) !important; color: #fff !important; border: 0 !important; }
