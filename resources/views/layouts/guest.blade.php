@@ -12,6 +12,19 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <style>
+            /* Login / register / password pages: readable on the dark theme whatever colours are saved in Site settings. */
+            .auth-card input:not([type=checkbox]):not([type=radio]) { background: #fff !important; color: #0f172a !important; caret-color: #0f172a; }
+            .auth-card input::placeholder { color: #64748b !important; }
+            .auth-card input + button, .auth-card input ~ button { color: #475569 !important; }
+            .auth-card .auth-link { color: #7dd3fc !important; text-decoration: underline; }
+            .auth-card .auth-link:hover { color: #fff !important; }
+            .auth-card .auth-btn { background: linear-gradient(135deg, #0ea5e9, #2563eb) !important; color: #fff !important; border: 0 !important; }
+            .auth-card .auth-btn:hover { filter: brightness(1.12); }
+            .auth-card .auth-btn-outline { display: flex; align-items: center; justify-content: center; width: 100%; margin-top: .75rem; padding: .55rem 1rem; border: 1px solid #7dd3fc; border-radius: .375rem; color: #e0f2fe !important; font-weight: 600; font-size: .875rem; text-decoration: none; }
+            .auth-card .auth-btn-outline:hover { background: rgba(125, 211, 252, .14); }
+        </style>
     </head>
     <body class="font-sans text-gray-900 antialiased">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 site-bg">
@@ -25,7 +38,7 @@
                 </a>
             </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+            <div class="auth-card w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
                 {{ $slot }}
             </div>
         </div>

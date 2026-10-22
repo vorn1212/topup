@@ -31,16 +31,20 @@
 
         <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
+                <a class="auth-link text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
                     {{ __('Forgot your password?') }}
                 </a>
             @endif
 
-            <x-primary-button class="ms-3">
+            <x-primary-button class="auth-btn ms-3">
                 {{ __('Log in') }}
             </x-primary-button>
         </div>
     </form>
 
     <x-google-button />
+
+    @if (Route::has('register'))
+        <a href="{{ route('register') }}" class="auth-btn-outline">{{ __('Register') }}</a>
+    @endif
 </x-guest-layout>
