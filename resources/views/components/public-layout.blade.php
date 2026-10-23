@@ -79,6 +79,19 @@
     </header>
 
     <main class="flex-1">
+        @unless (request()->routeIs('home'))
+            <div class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+                <a href="{{ route('home') }}" class="back-link"
+                   onclick="if (history.length > 1 && document.referrer.indexOf(location.host) !== -1) { history.back(); return false; }">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                    {{ __('Back') }}
+                </a>
+            </div>
+            <style>
+                .back-link { display: inline-flex; align-items: center; gap: .35rem; padding: .4rem .9rem .4rem .6rem; border-radius: 9999px; font-size: .9rem; font-weight: 600; color: #fff !important; background: rgba(15, 23, 42, .65); border: 1px solid rgba(255, 255, 255, .25); text-decoration: none; }
+                .back-link:hover { background: rgba(37, 99, 235, .85); }
+            </style>
+        @endunless
         {{ $slot }}
     </main>
 
@@ -91,6 +104,7 @@
         @else
             <a href="{{ route('contact') }}" class="mb-3 inline-block text-sm text-indigo-600 hover:underline">{{ __('Contact Us') }}</a>
         @endif
+        <div class="mb-2"><a href="{{ route('faq') }}" class="underline">{{ __('FAQ') }}</a> &middot; <a href="{{ route('privacy') }}" class="underline">{{ __('Privacy Policy') }}</a></div>
         <div>&copy; {{ date('Y') }} {{ $siteName }}. {{ __('All rights reserved.') }}</div>
     </footer>
 </body>

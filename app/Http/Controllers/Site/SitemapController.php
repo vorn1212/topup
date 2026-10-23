@@ -13,6 +13,8 @@ class SitemapController extends Controller
         $urls = [
             [route('home'), null, 'daily', '1.0'],
             [route('games.index'), null, 'daily', '0.9'],
+            [route('faq'), null, 'monthly', '0.5'],
+            [route('privacy'), null, 'yearly', '0.3'],
         ];
 
         foreach (Game::query()->active()->orderBy('id')->get(['id', 'slug', 'updated_at']) as $game) {
