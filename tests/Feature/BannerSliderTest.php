@@ -154,7 +154,7 @@ class BannerSliderTest extends TestCase
 
     public function test_game_lists_use_two_columns_on_phones_and_three_on_pc(): void
     {
-        $this->get('/')->assertOk()->assertSee('grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3', false);
-        $this->get(route('games.index'))->assertOk()->assertSee('grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3', false);
+        $this->get('/')->assertOk()->assertSee('grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4', false);
+        $this->get(route('games.index'))->assertOk()->assertSee('grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4', false);
     }
 }

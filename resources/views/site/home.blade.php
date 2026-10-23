@@ -12,7 +12,7 @@
             <a href="{{ route('games.index') }}" class="text-sm text-sky-300 hover:underline">{{ __('View all') }}</a>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             @forelse ($games as $game)
                 @include('site._game-card', ['game' => $game])
             @empty
