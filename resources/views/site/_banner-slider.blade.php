@@ -14,6 +14,9 @@
 
 @if ($count > 0)
     <style>
+        /* The box and its height are plain CSS on purpose: they must work without rebuilding the Tailwind stylesheet. */
+        .gg-slider { position: relative; width: 100%; aspect-ratio: 8 / 3; min-height: 120px; overflow: hidden; background: #0f172a; border-radius: .75rem; box-shadow: 0 10px 25px rgba(0, 0, 0, .35); outline: 1px solid rgba(56, 189, 248, .25); }
+        @media (min-width: 640px) { .gg-slider { border-radius: 1rem; } }
         .gg-slider .gg-slide { position: absolute; inset: 0; display: block; opacity: 0; pointer-events: none; }
         .gg-slider .gg-slide.gg-static { opacity: 1; pointer-events: auto; }
         .gg-slider .gg-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -45,8 +48,8 @@
         @endif
     </style>
 
-    <section class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8" aria-roledescription="carousel" aria-label="{{ config('app.name') }}">
-        <div class="gg-slider relative aspect-[8/3] w-full overflow-hidden rounded-xl bg-slate-900 shadow-lg ring-1 ring-sky-400/20 sm:rounded-2xl">
+    <section class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8" style="max-width: 80rem; margin-left: auto; margin-right: auto; padding-top: 1rem;" aria-roledescription="carousel" aria-label="{{ config('app.name') }}">
+        <div class="gg-slider">
             @foreach ($slides as $i => $slide)
                 @php
                     $slideClass = 'gg-slide'.($count === 1 ? ' gg-static' : '');
