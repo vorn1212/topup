@@ -101,30 +101,6 @@
                 @endif
             </div>
 
-            {{-- Step 2: package --}}
-            <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-gray-200">
-                <h2 class="mb-3 font-semibold text-gray-900">2. {{ __('Choose a package') }}</h2>
-
-                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    @forelse ($products as $product)
-                        <label class="flex items-center justify-between rounded-lg border p-3 {{ $product->is_available ? 'cursor-pointer' : 'cursor-not-allowed opacity-50' }}"
-                               :class="selected == {{ $product->id }} ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200'">
-                            <span class="flex items-center gap-2">
-                                <input type="radio" name="product_id" value="{{ $product->id }}" x-model="selected" required
-                                       @checked($selectedId === $product->id) @disabled(! $product->is_available) class="text-indigo-600">
-                                <x-package-icon :url="$product->iconUrl($game)" class="h-8 w-8 shrink-0" /><span class="text-sm text-gray-900">{{ $product->name }}</span>
-                            </span>
-                            <span class="text-sm font-semibold text-indigo-600">
-                                {{ $product->is_available ? \App\Support\Money::display((string) $product->selling_price, $product->currency) : __('Unavailable') }}
-                            </span>
-                        </label>
-                    @empty
-                        <p class="text-sm text-gray-500">{{ __('Packages are coming soon.') }}</p>
-                    @endforelse
-                </div>
-                <x-input-error :messages="$errors->get('product_id')" class="mt-2" />
-            </div>
-
             {{-- Summary --}}
             <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-gray-200">
                 <div class="flex items-center justify-between text-sm">
@@ -165,6 +141,30 @@
                         class="mt-4 w-full rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">
                     {{ __('Pay with wallet') }}
                 </button>
+            </div>
+
+            {{-- Step 2: package --}}
+            <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-gray-200">
+                <h2 class="mb-3 font-semibold text-gray-900">2. {{ __('Choose a package') }}</h2>
+
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    @forelse ($products as $product)
+                        <label class="flex items-center justify-between rounded-lg border p-3 {{ $product->is_available ? 'cursor-pointer' : 'cursor-not-allowed opacity-50' }}"
+                               :class="selected == {{ $product->id }} ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200'">
+                            <span class="flex items-center gap-2">
+                                <input type="radio" name="product_id" value="{{ $product->id }}" x-model="selected" required
+                                       @checked($selectedId === $product->id) @disabled(! $product->is_available) class="text-indigo-600">
+                                <x-package-icon :url="$product->iconUrl($game)" class="h-8 w-8 shrink-0" /><span class="text-sm text-gray-900">{{ $product->name }}</span>
+                            </span>
+                            <span class="text-sm font-semibold text-indigo-600">
+                                {{ $product->is_available ? \App\Support\Money::display((string) $product->selling_price, $product->currency) : __('Unavailable') }}
+                            </span>
+                        </label>
+                    @empty
+                        <p class="text-sm text-gray-500">{{ __('Packages are coming soon.') }}</p>
+                    @endforelse
+                </div>
+                <x-input-error :messages="$errors->get('product_id')" class="mt-2" />
             </div>
         </form>
     </div>
