@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * Website name, logo, favicon, home banner picture, contact links and colours.
+ * Website name, logo, favicon, home banner picture, banner slider, contact links and colours.
  * Super admin only (settings.manage); every change is audited.
  */
 class SiteSettingsController extends Controller
@@ -22,7 +22,7 @@ class SiteSettingsController extends Controller
     private const EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'ico'];
 
     /** Pictures that can be uploaded or removed here. */
-    private const PICTURES = ['logo', 'favicon', 'banner'];
+    private const PICTURES = ['logo', 'favicon', 'banner', 'slide1', 'slide2', 'slide3', 'slide4', 'slide5'];
 
     public function edit(SiteSettings $settings): View
     {
@@ -40,7 +40,7 @@ class SiteSettingsController extends Controller
         }
 
         // An empty box removes the link (null), so that button disappears from the website.
-        foreach (['telegram_url', 'facebook_url'] as $key) {
+        foreach (['telegram_url', 'facebook_url', 'slide1_link', 'slide2_link', 'slide3_link', 'slide4_link', 'slide5_link'] as $key) {
             $link = trim((string) ($data[$key] ?? ''));
             $values[$key] = $link !== '' ? $link : null;
         }

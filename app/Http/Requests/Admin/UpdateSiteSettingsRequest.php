@@ -30,6 +30,13 @@ class UpdateSiteSettingsRequest extends FormRequest
             'facebook_url' => ['nullable', 'string', 'max:250', 'regex:'.SiteSettings::FACEBOOK_PATTERN],
         ];
 
+        // Banner slider: up to SLIDE_COUNT wide pictures, each with an optional link.
+        for ($slot = 1; $slot <= SiteSettings::SLIDE_COUNT; $slot++) {
+            $rules['slide'.$slot] = ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:3072', 'dimensions:max_width=3000,max_height=3000'];
+            $rules['remove_slide'.$slot] = ['nullable', 'boolean'];
+            $rules['slide'.$slot.'_link'] = ['nullable', 'string', 'max:300', 'regex:'.SiteSettings::SLIDE_LINK_PATTERN];
+        }
+
         foreach (SiteSettings::COLOR_KEYS as $key) {
             $rules['color_'.$key] = ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'];
         }
@@ -40,7 +47,13 @@ class UpdateSiteSettingsRequest extends FormRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return [
+        $slides = [];
+        for ($slot = 1; $slot <= SiteSettings::SLIDE_COUNT; $slot++) {
+            $slides['slide'.$slot] = 'slide '.$slot.' picture';
+            $slides['slide'.$slot.'_link'] = 'slide '.$slot.' link';
+        }
+
+        return $slides + [
             'site_name' => 'website name',
             'banner' => 'banner picture',
             'telegram_url' => 'Telegram link',
@@ -59,7 +72,12 @@ class UpdateSiteSettingsRequest extends FormRequest
     /** @return array<string, string> */
     public function messages(): array
     {
-        return [
+        $slides = [];
+        for ($slot = 1; $slot <= SiteSettings::SLIDE_COUNT; $slot++) {
+            $slides['slide'.$slot.'_link.regex'] = 'The slide '.$slot.' link must start with https:// or be a path on this site such as /games.';
+        }
+
+        return $slides + [
             'telegram_url.regex' => 'The Telegram link must start with https://t.me/ (for example https://t.me/yourname).',
             'facebook_url.regex' => 'The Facebook page link must start with https://www.facebook.com/ (for example https://www.facebook.com/yourpage).',
         ];

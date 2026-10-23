@@ -1,6 +1,8 @@
 @inject('site', 'App\Services\SiteSettings')
 
 <x-public-layout>
+    @include('site._banner-slider', ['slides' => $site->slides()])
+
     <section class="relative overflow-hidden">
         <div class="mx-auto grid max-w-7xl items-center gap-6 px-4 py-12 sm:px-6 md:grid-cols-2 lg:px-8 lg:py-16">
             <div class="text-center md:text-left">
@@ -32,7 +34,7 @@
             <a href="{{ route('games.index') }}" class="text-sm text-sky-300 hover:underline">{{ __('View all') }}</a>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
             @forelse ($games as $game)
                 @include('site._game-card', ['game' => $game])
             @empty

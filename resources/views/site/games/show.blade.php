@@ -26,11 +26,11 @@
 
         <h2 class="mb-3 mt-8 text-lg font-semibold text-gray-900">{{ __('Choose a package') }}</h2>
 
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
             @forelse ($products as $product)
-                <div class="flex items-center justify-between gap-3 rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200">
+                <div class="flex items-center justify-between gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 sm:gap-3 sm:p-4">
                     <div class="min-w-0">
-                        <p class="font-medium text-gray-900">{{ $product->name }}</p>
+                        <p class="break-words text-sm font-medium text-gray-900 sm:text-base">{{ $product->name }}</p>
                         @if (filled($product->description))
                             <p class="text-xs text-gray-500">{{ $product->description }}</p>
                         @endif
@@ -42,7 +42,7 @@
                             <span class="mt-1 inline-block text-xs text-gray-400">{{ __('Unavailable') }}</span>
                         @endif
                     </div>
-                    <x-package-icon :url="$product->iconUrl($game)" class="h-16 w-16 shrink-0" />
+                    <x-package-icon :url="$product->iconUrl($game)" class="h-10 w-10 shrink-0 sm:h-16 sm:w-16" />
                 </div>
             @empty
                 <p class="col-span-full text-sm text-gray-500">{{ __('Packages are coming soon.') }}</p>

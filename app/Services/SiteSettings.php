@@ -9,7 +9,7 @@ use InvalidArgumentException;
 use Throwable;
 
 /**
- * The shop's look: name, logo, favicon, home banner picture, contact links and colours, edited by the super admin.
+ * The shop's look: name, logo, favicon, home banner picture, banner slider, contact links and colours, edited by the super admin.
  *
  * Safety rules:
  *  - every value is checked again when it is READ, so a hand-edited database row can never inject CSS, a file path or a bad link;
@@ -37,6 +37,12 @@ class SiteSettings
 
     public const FACEBOOK_PATTERN = '#^https://((www|m|web)\.)?(facebook\.com|fb\.com|fb\.me|m\.me)/[A-Za-z0-9_.\-/?=&%+]{1,150}$#';
 
+    /** How many pictures the home page banner slider can hold. */
+    public const SLIDE_COUNT = 5;
+
+    /** A slide link is a full https address or a path on this site (never javascript:, data: or //host). */
+    public const SLIDE_LINK_PATTERN = '~^(https://[A-Za-z0-9.\-]{3,100}(/[A-Za-z0-9_\-./?=&%+:]{0,200})?|/(?!/)[A-Za-z0-9_\-./?=&%+:]{0,200})$~';
+
     /** Shown as grey hints in the admin form. Links equal to these are treated as "not set yet" and stay hidden. */
     public const EXAMPLE_TELEGRAM = 'https://t.me/your_telegram';
 
@@ -46,6 +52,8 @@ class SiteSettings
 
     private const ALLOWED = [
         'site_name', 'logo_path', 'favicon_path', 'banner_path', 'telegram_url', 'facebook_url',
+        'slide1_path', 'slide2_path', 'slide3_path', 'slide4_path', 'slide5_path',
+        'slide1_link', 'slide2_link', 'slide3_link', 'slide4_link', 'slide5_link',
         'color_primary', 'color_page', 'color_nav', 'color_header', 'color_panel', 'color_footer', 'color_card', 'color_accent',
     ];
 
@@ -148,6 +156,43 @@ class SiteSettings
     public function bannerUrl(): ?string
     {
         return $this->url($this->path('banner'));
+    }
+
+    /**
+     * The home page banner slides that have a valid picture, in order.
+     *
+     * @return list<array{slot:int,url:string,link:?string}>
+     */
+    public function slides(): array
+    {
+        $slides = [];
+
+        for ($slot = 1; $slot <= self::SLIDE_COUNT; $slot++) {
+            $url = $this->slideUrl($slot);
+
+            if ($url !== null) {
+                $slides[] = ['slot' => $slot, 'url' => $url, 'link' => $this->slideLink($slot)];
+            }
+        }
+
+        return $slides;
+    }
+
+    public function slideUrl(int $slot): ?string
+    {
+        return ($slot >= 1 && $slot <= self::SLIDE_COUNT) ? $this->url($this->path('slide'.$slot)) : null;
+    }
+
+    /** The click-through link of a slide, or null when none is saved or it does not look safe. */
+    public function slideLink(int $slot): ?string
+    {
+        if ($slot < 1 || $slot > self::SLIDE_COUNT) {
+            return null;
+        }
+
+        $value = trim((string) ($this->raw('slide'.$slot.'_link') ?? ''));
+
+        return ($value !== '' && preg_match(self::SLIDE_LINK_PATTERN, $value) === 1) ? $value : null;
     }
 
     /** The Telegram link, or null when none (or only the example) has been saved. */

@@ -118,6 +118,40 @@
                     @endif
                 </div>
 
+                {{-- Home page banner slider --}}
+                <div class="bg-white shadow-sm sm:rounded-lg p-5 space-y-4">
+                    <h3 class="font-semibold text-gray-800">Home page banner slider</h3>
+                    <p class="text-xs text-gray-500">Up to {{ \App\Services\SiteSettings::SLIDE_COUNT }} wide pictures that switch automatically at the top of the home page. Best size: 1600 x 600 px (PNG, JPG or WebP, up to 3 MB). The link is optional: a full https:// address, or a path on this site such as /games/mobile-legends-global. With no pictures, the slider is hidden.</p>
+
+                    @for ($slot = 1; $slot <= \App\Services\SiteSettings::SLIDE_COUNT; $slot++)
+                        <div class="rounded-md border border-gray-200 p-3 space-y-2">
+                            <p class="text-sm font-medium text-gray-700">Slide {{ $slot }}</p>
+
+                            @if ($settings->slideUrl($slot))
+                                <img src="{{ $settings->slideUrl($slot) }}" alt="Slide {{ $slot }}" class="h-24 w-auto max-w-full rounded border border-gray-200 object-cover">
+                            @endif
+
+                            <input name="slide{{ $slot }}" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-gray-700">
+                            @error('slide'.$slot)
+                                <p class="text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+
+                            <input name="slide{{ $slot }}_link" type="text" maxlength="300"
+                                   value="{{ old('slide'.$slot.'_link', $settings->value('slide'.$slot.'_link')) }}"
+                                   placeholder="Link when clicked (optional)"
+                                   class="block w-full rounded-md border-gray-300 text-sm shadow-sm">
+                            @error('slide'.$slot.'_link')
+                                <p class="text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+
+                            @if ($settings->slideUrl($slot))
+                                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" name="remove_slide{{ $slot }}" value="1" class="rounded border-gray-300"> Remove this picture
+                                </label>
+                            @endif
+                        </div>
+                    @endfor
+                </div>
                 {{-- Contact links --}}
                 <div class="bg-white shadow-sm sm:rounded-lg p-5 space-y-4">
                     <h3 class="font-semibold text-gray-800">Contact Us links</h3>
