@@ -97,27 +97,6 @@
                     </div>
                 </div>
 
-                {{-- Home page banner --}}
-                <div class="bg-white shadow-sm sm:rounded-lg p-5 space-y-4">
-                    <h3 class="font-semibold text-gray-800">Home page banner character</h3>
-
-                    <div class="flex h-44 items-center justify-center rounded-md border border-dashed border-gray-300 bg-slate-900 p-2">
-                        @if ($settings->bannerUrl())
-                            <img src="{{ $settings->bannerUrl() }}" alt="Current banner picture" class="h-40 w-auto object-contain">
-                        @else
-                            <div class="h-40 w-40">@include('site._banner-character')</div>
-                        @endif
-                    </div>
-                    <input id="banner" name="banner" type="file" accept="image/png,image/jpeg,image/webp"
-                           class="block w-full text-sm text-gray-700">
-                    <p class="text-xs text-gray-500">PNG, JPG or WebP, up to 2 MB and 2400 x 2400 px. A transparent PNG of a character looks best. Without an upload, the built-in boy gamer is shown.</p>
-                    @if ($settings->bannerUrl())
-                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                            <input type="checkbox" name="remove_banner" value="1" class="rounded border-gray-300"> Remove my picture and show the built-in boy gamer
-                        </label>
-                    @endif
-                </div>
-
                 {{-- Home page banner slider --}}
                 <div class="bg-white shadow-sm sm:rounded-lg p-5 space-y-4">
                     <h3 class="font-semibold text-gray-800">Home page banner slider</h3>

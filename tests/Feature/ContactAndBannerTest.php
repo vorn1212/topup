@@ -68,30 +68,24 @@ class ContactAndBannerTest extends TestCase
             ->assertDontSee('t.me/');
     }
 
-    public function test_home_page_shows_the_built_in_character_by_default(): void
+    public function test_home_page_has_the_gaming_background_and_no_hero_section(): void
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('gg-character', false)
-            ->assertSee('gaming-bg', false);
+            ->assertSee('gaming-bg', false)
+            ->assertSee('<h1 class="sr-only">', false)
+            ->assertDontSee('gg-character', false);
     }
 
-    public function test_home_page_uses_the_uploaded_banner_picture(): void
+    public function test_an_old_banner_picture_setting_no_longer_changes_the_home_page(): void
     {
         $path = 'branding/'.str_repeat('a', 40).'.png';
         app(SiteSettings::class)->set(['banner_path' => $path]);
 
         $this->get('/')
             ->assertOk()
-            ->assertSee($path, false)
+            ->assertDontSee($path, false)
             ->assertDontSee('gg-character', false);
-    }
-
-    public function test_a_tampered_banner_path_falls_back_to_the_built_in_character(): void
-    {
-        app(SiteSettings::class)->set(['banner_path' => '../../.env']);
-
-        $this->get('/')->assertOk()->assertSee('gg-character', false);
     }
 
     public function test_signed_in_pages_have_the_animated_background_too(): void
