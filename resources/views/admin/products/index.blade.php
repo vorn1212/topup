@@ -20,6 +20,7 @@
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
             <x-flash />
+            <x-input-error :messages="$errors->get('delete')" />
 
             <form method="GET" class="flex flex-wrap gap-2">
                 <input type="text" name="q" value="{{ $search }}" placeholder="Search name or SKU"
@@ -116,6 +117,11 @@
                                         @csrf @method('PATCH')
                                         <button class="ml-3 text-gray-600 hover:underline">{{ $product->status->value === 'active' ? 'Disable' : 'Enable' }}</button>
                                     </form>
+                                <form method="POST" action="{{ route('admin.products.destroy', $product) }}" class="inline"
+                                      onsubmit="return confirm('Delete this product permanently?');">
+                                    @csrf @method('DELETE')
+                                    <button class="ml-3 text-red-600 hover:underline">Delete</button>
+                                </form>
                                 </td>
                             </tr>
                         @empty

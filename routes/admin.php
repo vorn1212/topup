@@ -41,6 +41,7 @@ Route::middleware('can:products.manage')->group(function () {
     Route::get('products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::patch('products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::patch('products/{product}/toggle', [ProductController::class, 'toggle'])->name('products.toggle');
+    Route::delete('products/{product}', [ProductController::class, 'destroy'])->middleware('throttle:30,1')->name('products.destroy');
     Route::get('products/{product}/history', [ProductController::class, 'history'])->name('products.history');
 });
 
