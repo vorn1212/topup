@@ -1,0 +1,34 @@
+﻿<?php
+
+namespace App\Models;
+
+use App\Enums\DepositStatus;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class WalletDeposit extends Model
+{
+    protected $fillable = [];
+
+    protected function casts(): array
+    {
+        return [
+            'amount' => 'decimal:4',
+            'status' => DepositStatus::class,
+            'expires_at' => 'datetime',
+            'qr_expires_at' => 'datetime',
+            'paid_at' => 'datetime',
+            'metadata' => 'array',
+        ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function wallet(): BelongsTo
+    {
+        return $this->belongsTo(Wallet::class);
+    }
+}

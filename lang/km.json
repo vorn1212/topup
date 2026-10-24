@@ -289,5 +289,20 @@
     "Do I need an account?": "តើខ្ញុំត្រូវការគណនីទេ?",
     "Yes. An account keeps your wallet and order history safe, so you can check your orders at any time.": "ត្រូវការ។ គណនីរក្សាកាបូប និងប្រវត្តិការបញ្ជាទិញរបស់អ្នកឲ្យមានសុវត្ថិភាព ដូច្នេះអ្នកអាចពិនិត្យការបញ្ជាទិញរបស់អ្នកបានគ្រប់ពេល។",
     "How do I contact support?": "តើខ្ញុំទាក់ទងផ្នែកជំនួយដោយរបៀបណា?",
-    "Use the Contact Us page or the Telegram and Facebook buttons at the bottom of the page. We reply as fast as we can.": "ប្រើទំព័រទាក់ទងយើង ឬប៊ូតុង Telegram និង Facebook នៅខាងក្រោមទំព័រ។ យើងឆ្លើយតបឲ្យបានលឿនបំផុត។"
+    "Use the Contact Us page or the Telegram and Facebook buttons at the bottom of the page. We reply as fast as we can.": "ប្រើទំព័រទាក់ទងយើង ឬប៊ូតុង Telegram និង Facebook នៅខាងក្រោមទំព័រ។ យើងឆ្លើយតបឲ្យបានលឿនបំផុត។",
+    "Keep this page open. Your top-up starts automatically after payment.": "សូមទុកទំព័រនេះបើកចោល។ ការបញ្ចូលទឹកប្រាក់របស់អ្នកនឹងចាប់ផ្តើមដោយស្វ័យប្រវត្តិបន្ទាប់ពីបង់ប្រាក់។",
+    "No money was taken. Please go back and try again.": "មិនមានការកាត់ប្រាក់ទេ។ សូមត្រឡប់ក្រោយ ហើយព្យាយាមម្តងទៀត។",
+    "Pay by QR": "បង់ប្រាក់តាម QR",
+    "Payment received, but we could not start your top-up": "បានទទួលការបង់ប្រាក់ ប៉ុន្តែយើងមិនអាចចាប់ផ្តើមការបញ្ចូលទឹកប្រាក់របស់អ្នកបានទេ",
+    "Please contact us with this number so we can fix it:": "សូមទាក់ទងយើងជាមួយលេខនេះ ដើម្បីឲ្យយើងដោះស្រាយ៖",
+    "Please contact us with this number so we can return your money:": "សូមទាក់ទងយើងជាមួយលេខនេះ ដើម្បីឲ្យយើងប្រគល់ប្រាក់របស់អ្នកវិញ៖",
+    "Scan the QR code with your banking app to pay and start your top-up.": "ស្កេនកូដ QR ដោយកម្មវិធីធនាគាររបស់អ្នក ដើម្បីបង់ប្រាក់ និងចាប់ផ្តើមការបញ្ចូលទឹកប្រាក់។",
+    "Starting your top-up…": "កំពុងចាប់ផ្តើមការបញ្ចូលទឹកប្រាក់របស់អ្នក…",
+    "Top-up delivered. Enjoy your game!": "បានបញ្ចូលទឹកប្រាក់រួចរាល់។ សូមរីករាយជាមួយហ្គេម!",
+    "We could not complete this top-up": "យើងមិនអាចបញ្ចប់ការបញ្ចូលទឹកប្រាក់នេះបានទេ",
+    "Pay with QR": "បង់ប្រាក់តាម QR",
+    "Pay :price by QR code?": "បង់ប្រាក់ :price តាមកូដ QR ឬ?",
+    "Choose your :game package, enter your player details and pay by QR code.": "ជ្រើសរើសកញ្ចប់ :game របស់អ្នក បញ្ចូលព័ត៌មានអ្នកលេង ហើយបង់ប្រាក់តាមកូដ QR។",
+    "Payments are temporarily unavailable. Please try again later.": "ការបង់ប្រាក់មិនអាចប្រើបានជាបណ្តោះអាសន្ន។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។",
+    "Too many payments are open from your network. Please finish them or wait for them to expire.": "មានការបង់ប្រាក់បើកច្រើនពេកពីបណ្តាញរបស់អ្នក។ សូមបញ្ចប់ ឬរង់ចាំឲ្យវាផុតកំណត់។"
 }

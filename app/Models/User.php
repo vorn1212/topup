@@ -65,6 +65,20 @@ class User extends Authenticatable
         return $this->hasMany(WalletDeposit::class);
     }
 
+    /** One-off accounts made for visitors who top up without registering. They cannot log in. */
+    public const GUEST_DOMAIN = 'guest.invalid';
+
+    public function isGuest(): bool
+    {
+        return str_ends_with((string) $this->email, '@'.self::GUEST_DOMAIN);
+    }
+
+    /** A guest has no real address: send nothing. */
+    public function routeNotificationForMail(): ?string
+    {
+        return $this->isGuest() ? null : $this->email;
+    }
+
     public function isActive(): bool
     {
         return $this->status === UserStatus::Active;

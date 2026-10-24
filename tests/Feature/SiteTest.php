@@ -152,11 +152,12 @@ class SiteTest extends TestCase
             ->assertSee('Europe')
             ->assertSee('60 Genesis Crystals')
              ->assertSee('$1.14')
-            ->assertSee('to place an order')
+            ->assertSee('Pay with QR')
+            ->assertDontSee('to place an order')
             ->assertSessionHas('url.intended', url("/games/genshin-impact/top-up?product={$product->id}"));
     }
 
-    public function test_top_up_page_shows_the_wallet_balance_to_signed_in_users(): void
+    public function test_top_up_page_offers_qr_payment_and_no_wallet(): void
     {
         $game = $this->makeGame(['slug' => 'any-game']);
         $this->addField($game, 'player_id', 'Player ID');
@@ -168,8 +169,8 @@ class SiteTest extends TestCase
 
         $this->actingAs($user)->get('/games/any-game/top-up')
             ->assertOk()
-            ->assertSee('$12.50')
-            ->assertSee('Deposit money')
+            ->assertSee('Pay with QR')
+            ->assertDontSee('$12.50')
             ->assertDontSee('to place an order');
     }
 

@@ -22,7 +22,7 @@ class SecurityAccessTest extends TestCase
     use MakesCatalog, MakesOrders, RefreshDatabase;
 
     /** Mutating routes that a signed-out visitor is meant to reach. */
-    private const PUBLIC_POSTS = ['login', 'register', 'forgot-password', 'reset-password', 'webhooks/fazercards', 'locale'];
+    private const PUBLIC_POSTS = ['login', 'register', 'forgot-password', 'reset-password', 'webhooks/fazercards', 'checkout', 'locale'];
 
     protected function setUp(): void
     {

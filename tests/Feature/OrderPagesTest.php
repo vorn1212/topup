@@ -290,10 +290,10 @@ class OrderPagesTest extends TestCase
     {
         $this->actingAs($this->user)->get('/games/pubg-mobile/top-up')
             ->assertOk()
-            ->assertSee('action="'.route('orders.store').'"', false)
+            ->assertSee('action="'.route('checkout.store').'"', false)
             ->assertSee('name="request_token"', false)
             ->assertSee('name="expected_price"', false)
-            ->assertSee('Pay with wallet');
+            ->assertSee('Pay with QR');
     }
 
     public function test_every_page_view_gets_a_fresh_token(): void

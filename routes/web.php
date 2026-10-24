@@ -3,6 +3,7 @@
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Site\GameController as SiteGameController;
+use App\Http\Controllers\Site\CheckoutController;
 use App\Http\Controllers\Site\HomeController;
 use App\Http\Controllers\Site\PlayerValidationController;
 use App\Http\Controllers\Site\SitemapController;
@@ -46,6 +47,17 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
     });
 
+    // ---- Top up without an account: pay by QR (the long random token in the address is the key) ----
+    Route::post('/checkout', [CheckoutController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('checkout.store');
+    Route::prefix('/pay/{depositNumber}/{token}')
+        ->where(['depositNumber' => '[A-Za-z0-9\-]+', 'token' => '[A-Za-z0-9]{40}'])
+        ->group(function () {
+            Route::get('/', [CheckoutController::class, 'show'])->name('checkout.show');
+            Route::get('/status', [CheckoutController::class, 'status'])->middleware('throttle:120,1')->name('checkout.status');
+            Route::get('/qr', [CheckoutController::class, 'qr'])->middleware('throttle:120,1')->name('checkout.qr');
+        });
     // ---- Signed-in area ----
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
