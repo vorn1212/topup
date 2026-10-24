@@ -45,14 +45,14 @@ class PlayerAutoCheckPageTest extends TestCase
             ->assertDontSee('id="check-player"', false); // the old button is gone
     }
 
-    public function test_guests_are_told_to_log_in_for_the_check(): void
+    public function test_guests_also_get_the_automatic_check(): void
     {
         $this->game();
 
         $this->get('/games/pubg-mobile/top-up')
             ->assertOk()
-            ->assertSee('data-enabled="0"', false)
-            ->assertSee('Log in to verify your player account automatically');
+            ->assertSee('data-enabled="1"', false)
+            ->assertDontSee('Log in to verify your player account automatically');
     }
 
     public function test_games_without_a_check_category_show_nothing(): void

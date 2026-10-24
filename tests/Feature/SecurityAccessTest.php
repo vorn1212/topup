@@ -22,7 +22,7 @@ class SecurityAccessTest extends TestCase
     use MakesCatalog, MakesOrders, RefreshDatabase;
 
     /** Mutating routes that a signed-out visitor is meant to reach. */
-    private const PUBLIC_POSTS = ['login', 'register', 'forgot-password', 'reset-password', 'webhooks/fazercards', 'checkout', 'locale'];
+    private const PUBLIC_POSTS = ['login', 'register', 'forgot-password', 'reset-password', 'webhooks/fazercards', 'checkout', 'games/{slug}/validate-player', 'locale'];
 
     protected function setUp(): void
     {
@@ -155,7 +155,7 @@ class SecurityAccessTest extends TestCase
 
     public function test_orders_and_deposits_need_an_active_account(): void
     {
-        foreach (['orders.store', 'wallet.deposit.store', 'games.validate-player'] as $name) {
+        foreach (['orders.store', 'wallet.deposit.store'] as $name) {
             $this->assertTrue(
                 $this->has($this->middleware(RouteFacade::getRoutes()->getByName($name)), 'active'),
                 "{$name} must use the active-account check"

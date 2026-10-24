@@ -91,10 +91,7 @@
 
                 {{-- Automatic player check: the result card appears right under the text boxes --}}
                 @if ($validationReady)
-                    <div id="player-check" data-enabled="{{ $user ? '1' : '0' }}">
-                        @guest
-                            <p class="text-xs text-gray-500">{{ __('Log in to verify your player account automatically.') }}</p>
-                        @endguest
+                    <div id="player-check" data-enabled="1">
                         <div id="player-result" class="hidden" role="status" aria-live="polite"></div>
                         <button type="button" id="player-retry" class="mt-1 hidden text-xs text-indigo-600 hover:underline">{{ __('Try again') }}</button>
                     </div>

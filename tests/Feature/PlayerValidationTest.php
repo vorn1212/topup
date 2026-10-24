@@ -73,9 +73,11 @@ class PlayerValidationTest extends TestCase
         return $this->actingAs($as ?? $this->user)->postJson('/games/pubg-mobile/validate-player', ['fields' => $fields]);
     }
 
-    public function test_guests_cannot_use_the_check(): void
+    public function test_guests_can_use_the_check(): void
     {
-        $this->post('/games/pubg-mobile/validate-player', ['fields' => ['player_id' => '123456789']])->assertRedirect('/login');
+        $this->fakeProvider();
+
+        $this->postJson('/games/pubg-mobile/validate-player', ['fields' => ['player_id' => '123456789']])->assertOk()->assertJsonPath('data.valid', true);
     }
 
     public function test_a_valid_player_is_reported_with_the_name(): void

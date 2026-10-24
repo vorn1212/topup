@@ -58,6 +58,12 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/status', [CheckoutController::class, 'status'])->middleware('throttle:120,1')->name('checkout.status');
             Route::get('/qr', [CheckoutController::class, 'qr'])->middleware('throttle:120,1')->name('checkout.qr');
         });
+    // Player ID check (open to visitors; it calls the provider, so it is throttled per address and cached).
+    Route::post('/games/{slug}/validate-player', PlayerValidationController::class)
+        ->where('slug', '[a-z0-9\-]+')
+        ->middleware('throttle:20,1')
+        ->name('games.validate-player');
+
     // ---- Signed-in area ----
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
@@ -77,12 +83,6 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/wallet/deposit/{depositNumber}/qr', [DepositController::class, 'qr'])
             ->middleware('throttle:90,1')
             ->name('wallet.deposit.qr');
-
-        // Player ID check (calls the provider, so: login required, active account, throttled).
-        Route::post('/games/{slug}/validate-player', PlayerValidationController::class)
-            ->where('slug', '[a-z0-9\-]+')
-            ->middleware(['active', 'throttle:20,1'])
-            ->name('games.validate-player');
 
         // Orders. Placing one needs an active account; viewing your own history never does.
         Route::post('/orders', [OrderController::class, 'store'])

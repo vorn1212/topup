@@ -18,6 +18,9 @@ class PlayerValidationController extends Controller
 {
     public function __invoke(Request $request, string $slug, FazerCardsService $api): JsonResponse
     {
+        // Visitors may check an ID; a signed-in account that is suspended or banned may not.
+        abort_if($request->user() && ! $request->user()->isActive(), 403);
+
         $game = Game::query()->active()->where('slug', $slug)->with('fields')->firstOrFail();
 
         // Staff get the technical reason. Customers never do.
