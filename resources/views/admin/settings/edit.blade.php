@@ -131,6 +131,27 @@
                         </div>
                     @endfor
                 </div>
+                {{-- Scrolling text under the banner --}}
+                <div class="bg-white shadow-sm sm:rounded-lg p-5 space-y-4">
+                    <h3 class="font-semibold text-gray-800">Scrolling text under the banner</h3>
+
+                    <div>
+                        <label for="marquee_text" class="block text-sm font-medium text-gray-700">Text (English)</label>
+                        <input id="marquee_text" name="marquee_text" type="text" maxlength="300"
+                               value="{{ old('marquee_text', $settings->value('marquee_text') ?? \App\Services\SiteSettings::DEFAULT_MARQUEE) }}"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        <p class="mt-1 text-xs text-gray-500">One line that scrolls under the home page banner. Leave this box empty to hide the line.</p>
+                    </div>
+
+                    <div>
+                        <label for="marquee_text_km" class="block text-sm font-medium text-gray-700">Text (Khmer, optional)</label>
+                        <input id="marquee_text_km" name="marquee_text_km" type="text" maxlength="300"
+                               value="{{ old('marquee_text_km', $settings->value('marquee_text_km')) }}"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        <p class="mt-1 text-xs text-gray-500">Shown to visitors who chose Khmer. If empty, they see the English text.</p>
+                    </div>
+                </div>
+
                 {{-- Contact links --}}
                 <div class="bg-white shadow-sm sm:rounded-lg p-5 space-y-4">
                     <h3 class="font-semibold text-gray-800">Contact Us links</h3>

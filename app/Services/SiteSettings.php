@@ -37,6 +37,9 @@ class SiteSettings
 
     public const FACEBOOK_PATTERN = '#^https://((www|m|web)\.)?(facebook\.com|fb\.com|fb\.me|m\.me)/[A-Za-z0-9_.\-/?=&%+]{1,150}$#';
 
+    /** The scrolling line under the banner, until the admin saves their own words. */
+    public const DEFAULT_MARQUEE = 'Fast and safe game top-up. Pay by QR and get your diamonds in minutes.';
+
     /** How many pictures the home page banner slider can hold. */
     public const SLIDE_COUNT = 5;
 
@@ -54,6 +57,7 @@ class SiteSettings
         'site_name', 'logo_path', 'favicon_path', 'banner_path', 'telegram_url', 'facebook_url',
         'slide1_path', 'slide2_path', 'slide3_path', 'slide4_path', 'slide5_path',
         'slide1_link', 'slide2_link', 'slide3_link', 'slide4_link', 'slide5_link',
+        'marquee_text', 'marquee_text_km',
         'color_primary', 'color_page', 'color_nav', 'color_header', 'color_panel', 'color_footer', 'color_card', 'color_accent',
     ];
 
@@ -193,6 +197,34 @@ class SiteSettings
         $value = trim((string) ($this->raw('slide'.$slot.'_link') ?? ''));
 
         return ($value !== '' && preg_match(self::SLIDE_LINK_PATTERN, $value) === 1) ? $value : null;
+    }
+
+    /**
+     * The scrolling text under the banner in the visitor's language, or null when the admin switched it off
+     * (saved an empty English box). Khmer visitors get the Khmer box, else the English one.
+     */
+    public function marquee(): ?string
+    {
+        $en = $this->raw('marquee_text');
+
+        if ($en !== null && trim($en) === '') {
+            return null;
+        }
+
+        $text = null;
+
+        if (app()->getLocale() === 'km') {
+            $km = trim((string) ($this->raw('marquee_text_km') ?? ''));
+            $text = $km !== '' ? $km : null;
+        }
+
+        $text ??= ($en === null) ? self::DEFAULT_MARQUEE : trim($en);
+
+        if ($text === self::DEFAULT_MARQUEE) {
+            return __(self::DEFAULT_MARQUEE);
+        }
+
+        return mb_substr($text, 0, 300);
     }
 
     /** The Telegram link, or null when none (or only the example) has been saved. */

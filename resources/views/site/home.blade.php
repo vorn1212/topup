@@ -6,6 +6,10 @@
 
     @include('site._banner-slider', ['slides' => $site->slides()])
 
+    @if ($marquee = $site->marquee())
+        @include('site._marquee', ['text' => $marquee])
+    @endif
+
     <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div class="mb-5 flex items-center justify-between">
             <h2 class="text-xl font-semibold text-white">{{ __('Popular games') }}</h2>

@@ -45,6 +45,19 @@ class SiteSettingsController extends Controller
             $values[$key] = $link !== '' ? $link : null;
         }
 
+        // The scrolling text under the banner. An empty English box switches the line off; an empty Khmer box
+        // means "show the English text to Khmer visitors too".
+        $request->validate([
+            'marquee_text' => ['nullable', 'string', 'max:300'],
+            'marquee_text_km' => ['nullable', 'string', 'max:300'],
+        ]);
+        if ($request->has('marquee_text')) {
+            foreach (['marquee_text', 'marquee_text_km'] as $key) {
+                $text = trim((string) preg_replace('/\s+/u', ' ', (string) $request->input($key, '')));
+                $values[$key] = ($key === 'marquee_text' || $text !== '') ? $text : null;
+            }
+        }
+
         $staleFiles = [];
         $newFiles = [];
 
