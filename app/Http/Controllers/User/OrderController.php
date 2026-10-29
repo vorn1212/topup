@@ -44,7 +44,7 @@ class OrderController extends Controller
         } catch (InsufficientBalanceException) {
             return back()->withInput()
                 ->with('insufficient', true)
-                ->with('error', 'Your wallet balance is not enough for this package.');
+                ->with('error', 'Insufficient funds. Please add funds.');
         } catch (OrderRejectedException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }

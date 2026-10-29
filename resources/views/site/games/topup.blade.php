@@ -9,12 +9,14 @@
     ])->all();
 
     $canOrder = $orderingReady && (! $user || $user->isActive());
+    $showWallet = $orderingReady && $user && $user->isActive();
+
     $input = 'mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500';
 
     // Every sentence the page scripts can show, translated on the server.
     $t = [
         'notFound' => __('We could not find this player account.'),
-        'payConfirm' => __('Pay :price by QR code?'),
+        'payConfirm' => $showWallet ? __('Pay :price from your wallet?') : __('Pay :price by QR code?'),
         'checking' => __('Checking player…'),
         'tooMany' => __('Too many checks. Please wait a few seconds…'),
         'couldNotVerify' => __('Could not verify the player right now. You can still continue.'),
@@ -49,7 +51,7 @@
             @endif
         </div>
 
-        <form id="topup-form" method="POST" action="{{ $orderingReady ? route('checkout.store') : '#' }}"
+        <form id="topup-form" method="POST" action="{{ $orderingReady ? ($showWallet ? route('orders.store') : route('checkout.store')) : '#' }}"
               class="space-y-6"
               x-data="{ selected: @js($selectedId), prices: @js($priceMap), raw: @js($rawMap), t: @js($t), submitting: false }"
               x-on:submit="if (submitting || ! confirm((window.playerCheck && window.playerCheck.state === 'invalid' ? t.notFound + ' ' : '') + t.payConfirm.replace(':price', selected ? prices['p' + selected] : ''))) { $event.preventDefault() } else { submitting = true }">
@@ -106,6 +108,16 @@
                 </div>
 
 
+                @if ($user)
+                    <div class="mt-2 flex items-center justify-between text-sm">
+                        <span class="text-gray-600">{{ __('Your wallet balance') }}</span>
+                        <span class="font-medium text-gray-900">{{ \App\Support\Money::format($balance) }}</span>
+                    </div>
+                    <p class="mt-1 text-right text-xs">
+                        <a href="{{ route('wallet.deposit.create') }}" class="text-indigo-600 hover:underline">{{ __('Deposit money') }}</a>
+                    </p>
+                @endif
+
                 <p class="mt-3 text-xs text-gray-500">{{ __('The final price is confirmed again when you place the order.') }}</p>
 
 
@@ -121,7 +133,7 @@
 
                 <button type="submit" x-bind:disabled="{{ $canOrder ? 'submitting' : 'true' }}"
                         class="mt-4 w-full rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">
-                    {{ __('Pay with QR') }}
+                    {{ $showWallet ? __('Pay with wallet') : __('Pay with QR') }}
                 </button>
             </div>
 

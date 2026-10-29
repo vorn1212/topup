@@ -192,7 +192,7 @@ class LanguageTest extends TestCase
 
         $this->get('/wallet')->assertSee('ប្រវត្តិប្រតិបត្តិការ');
         $this->get('/wallet/deposit')->assertSee('ចំនួនទឹកប្រាក់ដែលត្រូវដាក់');
-        $this->get('/games/pubg-mobile/top-up')->assertSee('ព័ត៌មានអ្នកលេង')->assertSee('បង់ប្រាក់តាម QR');
+        $this->get('/games/pubg-mobile/top-up')->assertSee('ព័ត៌មានអ្នកលេង')->assertSee('បង់ប្រាក់ពីកាបូប');
         $this->get('/order/'.$order->order_number)->assertSee('បានបញ្ជាទិញនៅ');
         $this->get('/orders')->assertSee('មើលព័ត៌មានលម្អិត');
     }

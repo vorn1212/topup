@@ -304,5 +304,6 @@
     "Pay :price by QR code?": "បង់ប្រាក់ :price តាមកូដ QR ឬ?",
     "Choose your :game package, enter your player details and pay by QR code.": "ជ្រើសរើសកញ្ចប់ :game របស់អ្នក បញ្ចូលព័ត៌មានអ្នកលេង ហើយបង់ប្រាក់តាមកូដ QR។",
     "Payments are temporarily unavailable. Please try again later.": "ការបង់ប្រាក់មិនអាចប្រើបានជាបណ្តោះអាសន្ន។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។",
-    "Too many payments are open from your network. Please finish them or wait for them to expire.": "មានការបង់ប្រាក់បើកច្រើនពេកពីបណ្តាញរបស់អ្នក។ សូមបញ្ចប់ ឬរង់ចាំឲ្យវាផុតកំណត់។"
+    "Too many payments are open from your network. Please finish them or wait for them to expire.": "មានការបង់ប្រាក់បើកច្រើនពេកពីបណ្តាញរបស់អ្នក។ សូមបញ្ចប់ ឬរង់ចាំឲ្យវាផុតកំណត់។",
+    "Insufficient funds. Please add funds.": "សមតុល្យមិនគ្រប់គ្រាន់។ សូមដាក់ប្រាក់បន្ថែម។"
 }

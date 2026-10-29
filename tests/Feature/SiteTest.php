@@ -157,7 +157,7 @@ class SiteTest extends TestCase
             ->assertSessionHas('url.intended', url("/games/genshin-impact/top-up?product={$product->id}"));
     }
 
-    public function test_top_up_page_offers_qr_payment_and_no_wallet(): void
+    public function test_top_up_page_shows_wallet_balance_and_both_payment_options(): void
     {
         $game = $this->makeGame(['slug' => 'any-game']);
         $this->addField($game, 'player_id', 'Player ID');
@@ -169,8 +169,10 @@ class SiteTest extends TestCase
 
         $this->actingAs($user)->get('/games/any-game/top-up')
             ->assertOk()
-            ->assertSee('Pay with QR')
-            ->assertDontSee('$12.50')
+            ->assertSee('$12.50')
+            ->assertSee('Deposit money')
+            ->assertSee('Pay with wallet')
+            ->assertDontSee('Pay with QR')
             ->assertDontSee('to place an order');
     }
 
