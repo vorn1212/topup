@@ -57,6 +57,7 @@
 <body class="gaming-bg flex min-h-screen flex-col bg-gray-100 site-bg font-sans text-gray-900 antialiased">
     <div class="gg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
     @include('layouts._halloween')
+    @include('layouts._lightning')
 
     <header class="border-b bg-white site-nav">
         <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">

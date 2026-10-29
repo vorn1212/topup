@@ -23,6 +23,7 @@
     <body class="gaming-bg {{ request()->routeIs('admin.*') ? 'gaming-calm' : '' }} font-sans antialiased">
         <div class="gg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
         @include('layouts._halloween')
+        @include('layouts._lightning')
 
         <div class="min-h-screen bg-gray-100 site-bg">
             @include('layouts.navigation')
