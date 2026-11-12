@@ -231,7 +231,7 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700" for="p_reason">Reason for the change</label>
-                            <input id="p_reason" name="reason" type="text" required class="{{ $input }}" value="{{ old('reason') }}" placeholder="FazerCards cost increase" />
+                            <input id="p_reason" name="reason" type="text" required class="{{ $input }}" value="{{ old('reason') }}" placeholder="RechargeGames cost increase" />
                             <x-input-error :messages="$errors->get('reason')" class="mt-1" />
                         </div>
 

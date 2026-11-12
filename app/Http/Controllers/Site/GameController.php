@@ -66,7 +66,7 @@ class GameController extends Controller
             'user' => $user,
             'balance' => $user ? $wallets->getBalance($user) : null,
             'orderingReady' => Route::has('orders.store'),
-            'validationReady' => filled($game->validation_category_id) && filled(config('fazercards.api_key')),
+            'validationReady' => filled($game->validation_category_id) && filled(config('rechargegames.api_key')),
             'validateUrl' => route('games.validate-player', $game->slug),
             // One token per page view: a double click or the back button cannot charge twice.
             'requestToken' => (string) Str::uuid(),

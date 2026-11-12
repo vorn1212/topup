@@ -79,7 +79,7 @@ class DeploymentFilesTest extends TestCase
         $this->assertSame('false', $env['APP_DEBUG']);
         $this->assertSame('true', $env['SESSION_SECURE_COOKIE']);
         $this->assertSame('database', $env['QUEUE_CONNECTION']);
-        $this->assertSame('false', $env['FAZERCARDS_FAKE'], 'FAZERCARDS_FAKE must be false on the live site.');
+        $this->assertSame('false', $env['RECHARGEGAMES_FAKE'], 'RECHARGEGAMES_FAKE must be false on the live site.');
         $this->assertSame('true', $env['PAYWAY_HEADLESS'], 'The server has no screen: the payment browser must be headless.');
         $this->assertStringStartsWith('https://', $env['APP_URL']);
         $this->assertSame('', $env['PAYWAY_LINK_URL'], 'The payment link is private. Do not write it in the example.');
@@ -95,7 +95,7 @@ class DeploymentFilesTest extends TestCase
     {
         $env = $this->envExample();
 
-        foreach (['PAYWAY_LINK_URL', 'PAYWAY_NODE_BINARY', 'PAYWAY_SESSION_SECONDS', 'PAYWAY_QR_SECONDS', 'PAYWAY_HEADLESS', 'FAZERCARDS_API_KEY', 'FAZERCARDS_FAKE', 'DB_QUEUE_RETRY_AFTER'] as $name) {
+        foreach (['PAYWAY_LINK_URL', 'PAYWAY_NODE_BINARY', 'PAYWAY_SESSION_SECONDS', 'PAYWAY_QR_SECONDS', 'PAYWAY_HEADLESS', 'RECHARGEGAMES_API_KEY', 'RECHARGEGAMES_FAKE', 'DB_QUEUE_RETRY_AFTER'] as $name) {
             $this->assertArrayHasKey($name, $env, $name.' is missing from the example.');
         }
     }

@@ -10,7 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class ProcessFazerCardsOrderJob implements ShouldQueue
+class ProcessRechargeGamesOrderJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 

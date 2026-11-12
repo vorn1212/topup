@@ -121,7 +121,7 @@ class HealthCheckTest extends TestCase
 
     public function test_the_same_mistake_is_a_warning_on_your_computer_and_a_failure_in_production(): void
     {
-        config(['app.debug' => true, 'queue.default' => 'sync', 'fazercards.fake' => true]);
+        config(['app.debug' => true, 'queue.default' => 'sync', 'rechargegames.fake' => true]);
 
         $this->assertSame(HealthCheck::WARN, $this->level('app_debug'));
         $this->assertSame(HealthCheck::WARN, $this->level('queue_driver'));
@@ -138,7 +138,7 @@ class HealthCheckTest extends TestCase
 
     public function test_good_settings_pass(): void
     {
-        config(['app.debug' => false, 'queue.default' => 'database', 'fazercards.fake' => false, 'fazercards.api_key' => 'k']);
+        config(['app.debug' => false, 'queue.default' => 'database', 'rechargegames.fake' => false, 'rechargegames.api_key' => 'k']);
         $this->production();
 
         $this->assertSame(HealthCheck::PASS, $this->level('app_debug'));
@@ -442,8 +442,8 @@ class HealthCheckTest extends TestCase
     public function test_ops_check_never_prints_secrets(): void
     {
         config([
-            'fazercards.api_key' => 'fz-secret-key-424242',
-            'fazercards.webhook_secret' => 'whsec-424242',
+            'rechargegames.api_key' => 'fz-secret-key-424242',
+            'rechargegames.webhook_secret' => 'whsec-424242',
             'payway_link.url' => 'https://link.payway.example/pay-secret-424242',
         ]);
 
@@ -474,8 +474,8 @@ class HealthCheckTest extends TestCase
     public function test_the_health_page_shows_no_secrets(): void
     {
         config([
-            'fazercards.api_key' => 'fz-secret-key-424242',
-            'fazercards.webhook_secret' => 'whsec-424242',
+            'rechargegames.api_key' => 'fz-secret-key-424242',
+            'rechargegames.webhook_secret' => 'whsec-424242',
             'payway_link.url' => 'https://link.payway.example/pay-secret-424242',
             'app.key' => 'base64:'.base64_encode(str_repeat('k', 32)),
         ]);

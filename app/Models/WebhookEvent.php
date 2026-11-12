@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * One verified delivery from a provider. Written only by FazerCardsWebhook.
+ * One verified delivery from a provider. Written only by RechargeGamesWebhook.
  */
 class WebhookEvent extends Model
 {

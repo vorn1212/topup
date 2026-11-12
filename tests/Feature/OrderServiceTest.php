@@ -7,7 +7,7 @@ use App\Enums\WalletTxType;
 use App\Exceptions\InsufficientBalanceException;
 use App\Exceptions\OrderRejectedException;
 use App\Exceptions\PriceChangedException;
-use App\Jobs\ProcessFazerCardsOrderJob;
+use App\Jobs\ProcessRechargeGamesOrderJob;
 use App\Models\Game;
 use App\Models\Order;
 use App\Models\Product;
@@ -40,7 +40,7 @@ class OrderServiceTest extends TestCase
     {
         parent::setUp();
 
-        config(['fazercards.api_key' => 'test-key-123', 'fazercards.fake' => false]);
+        config(['rechargegames.api_key' => 'test-key-123', 'rechargegames.fake' => false]);
         Queue::fake();
 
         $this->orders = app(OrderService::class);
@@ -108,7 +108,7 @@ class OrderServiceTest extends TestCase
         $this->assertSame('offer_60uc', $po->offer_id);
         $this->assertMatchesRegularExpression('/^[0-9a-f\-]{36}$/', $po->idempotency_key);
 
-        Queue::assertPushed(ProcessFazerCardsOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
+        Queue::assertPushed(ProcessRechargeGamesOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
         $this->assertDatabaseHas('audit_logs', ['action' => 'order.created', 'subject_id' => $order->id]);
     }
 
@@ -210,7 +210,7 @@ class OrderServiceTest extends TestCase
             $this->assertTrue(true);
         }
 
-        config(['fazercards.api_key' => '']);
+        config(['rechargegames.api_key' => '']);
 
         $this->expectException(OrderRejectedException::class);
         $this->place();
@@ -241,7 +241,7 @@ class OrderServiceTest extends TestCase
         $this->assertSame($first->id, $second->id);
         $this->assertSame(1, Order::count());
         $this->assertSame('19.0000', $this->balance());
-        Queue::assertPushed(ProcessFazerCardsOrderJob::class, 1);
+        Queue::assertPushed(ProcessRechargeGamesOrderJob::class, 1);
     }
 
     public function test_the_same_token_from_another_customer_is_a_separate_order(): void

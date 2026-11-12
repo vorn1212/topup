@@ -6,7 +6,7 @@ use App\Contracts\TopUpProvider;
 use App\Exceptions\ProviderException;
 use App\Exceptions\ProviderTimeoutException;
 use App\Services\TopUp\FakeTopUpProvider;
-use App\Services\TopUp\FazerCardsService;
+use App\Services\TopUp\RechargeGamesService;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
@@ -51,7 +51,7 @@ class FakeTopUpProviderTest extends TestCase
 
         // The order WAS created: the retry with the same key returns it.
         $retry = $this->fake->createOrder('cat', 'offer', ['player_id' => '123111'], 'key-4');
-        $this->assertMatchesRegularExpression(FazerCardsService::ORDER_ID_PATTERN, $retry['id']);
+        $this->assertMatchesRegularExpression(RechargeGamesService::ORDER_ID_PATTERN, $retry['id']);
     }
 
     public function test_orders_finish_after_a_delay(): void
@@ -69,10 +69,10 @@ class FakeTopUpProviderTest extends TestCase
 
     public function test_the_fake_is_never_used_unless_asked_for(): void
     {
-        config(['fazercards.fake' => false]);
-        $this->assertInstanceOf(FazerCardsService::class, app(TopUpProvider::class));
+        config(['rechargegames.fake' => false]);
+        $this->assertInstanceOf(RechargeGamesService::class, app(TopUpProvider::class));
 
-        config(['fazercards.fake' => true]);
+        config(['rechargegames.fake' => true]);
         $this->assertInstanceOf(FakeTopUpProvider::class, app(TopUpProvider::class));
     }
 }

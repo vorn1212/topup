@@ -24,7 +24,7 @@ class UpdateProductRequest extends FormRequest
             'provider_offer_id' => [
                 'nullable', 'string', 'max:64',
                 Rule::unique('products', 'provider_offer_id')
-                    ->where('provider', 'fazercards')
+                    ->where('provider', 'rechargegames')
                     ->where('game_id', $this->route('product')?->game_id)
                     ->ignore($this->route('product')?->id),
             ],

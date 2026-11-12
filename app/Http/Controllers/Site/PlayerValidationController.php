@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Site;
 use App\Exceptions\ProviderException;
 use App\Http\Controllers\Controller;
 use App\Models\Game;
-use App\Services\TopUp\FazerCardsService;
+use App\Services\TopUp\RechargeGamesService;
 use App\Services\TopUp\PlayerFields;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 
 class PlayerValidationController extends Controller
 {
-    public function __invoke(Request $request, string $slug, FazerCardsService $api): JsonResponse
+    public function __invoke(Request $request, string $slug, RechargeGamesService $api): JsonResponse
     {
         // Visitors may check an ID; a signed-in account that is suspended or banned may not.
         abort_if($request->user() && ! $request->user()->isActive(), 403);
@@ -41,7 +41,7 @@ class PlayerValidationController extends Controller
 
         // Send only the fields the provider's validation category expects.
         try {
-            $list = Cache::remember('fazercards:validatable', 3600, fn () => $api->getValidatableGames());
+            $list = Cache::remember('rechargegames:validatable', 3600, fn () => $api->getValidatableGames());
         } catch (ProviderException) {
             $list = null;
         }
@@ -78,7 +78,7 @@ class PlayerValidationController extends Controller
             $fields = $forward;
         }
 
-        $cacheKey = 'fazercards:validate:'.hash('sha256', $game->validation_category_id.'|'.json_encode($fields));
+        $cacheKey = 'rechargegames:validate:'.hash('sha256', $game->validation_category_id.'|'.json_encode($fields));
         $result = Cache::get($cacheKey);
 
         if ($result === null) {

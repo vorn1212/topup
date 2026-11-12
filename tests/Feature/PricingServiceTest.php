@@ -71,7 +71,7 @@ class PricingServiceTest extends TestCase
         $product = $this->makeProduct();
         $admin = User::factory()->admin()->create();
 
-        $updated = $this->pricing->update($product, null, MarkupType::FixedPrice, '1.20', $admin, 'FazerCards cost increase');
+        $updated = $this->pricing->update($product, null, MarkupType::FixedPrice, '1.20', $admin, 'RechargeGames cost increase');
 
         $this->assertSame('1.2000', $updated->selling_price);
         $this->assertSame(MarkupType::FixedPrice, $updated->markup_type);
@@ -82,7 +82,7 @@ class PricingServiceTest extends TestCase
             'old_markup' => '0.2000',
             'new_markup' => '0.4000',
             'changed_by' => $admin->id,
-            'reason' => 'FazerCards cost increase',
+            'reason' => 'RechargeGames cost increase',
         ]);
         $this->assertDatabaseHas('audit_logs', ['action' => 'price.changed', 'subject_id' => $product->id, 'actor_id' => $admin->id]);
     }

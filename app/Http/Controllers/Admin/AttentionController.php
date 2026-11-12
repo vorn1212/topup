@@ -6,7 +6,7 @@ use App\Enums\ProviderOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ProviderOrder;
 use App\Models\WebhookEvent;
-use App\Services\TopUp\FazerCardsWebhook;
+use App\Services\TopUp\RechargeGamesWebhook;
 use App\Services\TopUp\OrderRecoveryService;
 use App\Services\TopUp\ProviderBalanceMonitor;
 use DomainException;
@@ -22,7 +22,7 @@ use LogicException;
  */
 class AttentionController extends Controller
 {
-    public function index(ProviderBalanceMonitor $monitor, FazerCardsWebhook $webhook): View
+    public function index(ProviderBalanceMonitor $monitor, RechargeGamesWebhook $webhook): View
     {
         $snapshot = $monitor->snapshot();
 
@@ -49,7 +49,7 @@ class AttentionController extends Controller
             'balanceLow' => $monitor->isLow($snapshot),
             'balanceEnabled' => $monitor->enabled(),
             'webhookEnabled' => $webhook->isEnabled(),
-            'webhookUrl' => route('webhooks.fazercards'),
+            'webhookUrl' => route('webhooks.rechargegames'),
         ]);
     }
 

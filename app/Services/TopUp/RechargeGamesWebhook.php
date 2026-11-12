@@ -3,7 +3,7 @@
 namespace App\Services\TopUp;
 
 use App\Enums\ProviderOrderStatus;
-use App\Jobs\CheckFazerCardsOrderStatusJob;
+use App\Jobs\CheckRechargeGamesOrderStatusJob;
 use App\Models\ProviderOrder;
 use App\Models\WebhookEvent;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -11,53 +11,56 @@ use Illuminate\Http\Request;
 use Throwable;
 
 /**
- * Receives FazerCards webhooks.
+ * Receives RechargeGames webhooks (Standard Webhooks signing).
  *
  * The webhook is only a WAKE-UP CALL. Its content is never trusted to change an order:
- *  1. the signature (HMAC-SHA256 of the raw body, with our secret) must be valid;
- *  2. we look for a provider order id (ord-123) anywhere in the payload;
+ *  1. the signature must be valid and the timestamp recent;
+ *  2. we read the provider order id (ORD-XXXXXX) from the payload;
  *  3. we ask the provider for the real status of that order (same code path as polling).
  * So a replayed, reordered or odd-looking payload can never complete or refund an order by itself.
+ *
+ * Signature: base64( HMAC-SHA256( "{webhook-id}.{webhook-timestamp}.{raw body}", key ) ), sent as
+ * "v1,<signature>" (possibly several, space separated). key = base64-decoded part of the whsec_ secret.
  */
-class FazerCardsWebhook
+class RechargeGamesWebhook
 {
-    public const PROVIDER = 'fazercards';
+    public const PROVIDER = 'rechargegames';
 
     public const MAX_BODY_BYTES = 65536;
 
-    /** Signature headers seen in the provider's documentation and SDK. Either one is accepted. */
-    private const SIGNATURE_HEADERS = ['X-Webhook-Signature', 'X-FazerCards-Signature'];
-
     public function isEnabled(): bool
     {
-        return filled(config('fazercards.webhook_secret'));
+        return filled(config('rechargegames.webhook_secret'));
     }
 
-    /**
-     * The signature may be "sha256=<hex>" or plain "<hex>".
-     */
     public function signatureIsValid(Request $request, string $body): bool
     {
-        $secret = (string) config('fazercards.webhook_secret');
+        $key = $this->key();
 
-        if ($secret === '') {
+        if ($key === null) {
             return false;
         }
 
-        $expected = hash_hmac('sha256', $body, $secret);
+        $id = trim((string) $request->header('webhook-id', ''));
+        $timestamp = trim((string) $request->header('webhook-timestamp', ''));
+        $header = trim((string) $request->header('webhook-signature', ''));
 
-        foreach (self::SIGNATURE_HEADERS as $header) {
-            $value = strtolower(trim((string) $request->header($header, '')));
+        if ($id === '' || $header === '' || ! ctype_digit($timestamp)) {
+            return false;
+        }
 
-            if ($value === '') {
-                continue;
-            }
+        $tolerance = max(1, (int) config('rechargegames.webhook_tolerance', 300));
 
-            if (str_starts_with($value, 'sha256=')) {
-                $value = substr($value, 7);
-            }
+        if (abs(now()->getTimestamp() - (int) $timestamp) > $tolerance) {
+            return false;
+        }
 
-            if (hash_equals($expected, $value)) {
+        $expected = base64_encode(hash_hmac('sha256', $id.'.'.$timestamp.'.'.$body, $key, true));
+
+        foreach (preg_split('/\s+/', $header) ?: [] as $part) {
+            [$version, $signature] = array_pad(explode(',', $part, 2), 2, '');
+
+            if ($version === 'v1' && $signature !== '' && hash_equals($expected, $signature)) {
                 return true;
             }
         }
@@ -128,11 +131,10 @@ class FazerCardsWebhook
             return ['ignored', "Order is already {$po->status->value}; nothing to do."];
         }
 
-        // Look at it right now instead of waiting for the next poll.
         $po->forceFill(['next_check_at' => now()])->save();
 
         try {
-            CheckFazerCardsOrderStatusJob::dispatch($po->id);
+            CheckRechargeGamesOrderStatusJob::dispatch($po->id);
         } catch (Throwable $e) {
             // Not fatal: orders:process-pending polls it within a minute.
             report($e);
@@ -141,9 +143,24 @@ class FazerCardsWebhook
         return ['processed', 'A status check was queued.'];
     }
 
+    private function key(): ?string
+    {
+        $secret = trim((string) config('rechargegames.webhook_secret'));
+
+        if ($secret === '') {
+            return null;
+        }
+
+        if (str_starts_with($secret, 'whsec_')) {
+            $decoded = base64_decode(substr($secret, 6), true);
+
+            return $decoded === false || $decoded === '' ? null : $decoded;
+        }
+
+        return $secret;
+    }
+
     /**
-     * The first value that looks like a provider order id (ord-123), searched through the payload.
-     *
      * @param  array<mixed>  $data
      */
     private function findOrderId(array $data, int $depth = 0): ?string
@@ -152,10 +169,8 @@ class FazerCardsWebhook
             return null;
         }
 
-        foreach ($data as $value) {
-            if (is_string($value) && preg_match(FazerCardsService::ORDER_ID_PATTERN, $value)) {
-                return $value;
-            }
+        if (isset($data['order_id']) && is_string($data['order_id']) && preg_match(RechargeGamesService::ORDER_ID_PATTERN, $data['order_id'])) {
+            return $data['order_id'];
         }
 
         foreach ($data as $value) {
@@ -172,7 +187,7 @@ class FazerCardsWebhook
      */
     private function findEventType(array $data): ?string
     {
-        foreach (['event', 'type', 'event_type'] as $key) {
+        foreach (['type', 'event', 'event_type'] as $key) {
             if (isset($data[$key]) && is_string($data[$key]) && $data[$key] !== '') {
                 return mb_substr($data[$key], 0, 60);
             }

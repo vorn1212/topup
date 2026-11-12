@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\MarkupType;
 use App\Enums\WalletTxType;
-use App\Jobs\ProcessFazerCardsOrderJob;
+use App\Jobs\ProcessRechargeGamesOrderJob;
 use App\Models\Game;
 use App\Models\Order;
 use App\Models\Product;
@@ -34,7 +34,7 @@ class OrderPagesTest extends TestCase
     {
         parent::setUp();
 
-        config(['fazercards.api_key' => 'test-key-123', 'fazercards.fake' => false]);
+        config(['rechargegames.api_key' => 'test-key-123', 'rechargegames.fake' => false]);
         Queue::fake();
 
         $this->wallets = app(WalletService::class);
@@ -95,7 +95,7 @@ class OrderPagesTest extends TestCase
 
         $this->assertSame('1.0000', $order->selling_price);
         $this->assertSame('19.0000', $this->balance());
-        Queue::assertPushed(ProcessFazerCardsOrderJob::class, 1);
+        Queue::assertPushed(ProcessRechargeGamesOrderJob::class, 1);
     }
 
     public function test_prices_sent_by_the_browser_are_ignored(): void
@@ -119,7 +119,7 @@ class OrderPagesTest extends TestCase
 
         $this->assertSame(1, Order::count());
         $this->assertSame('19.0000', $this->balance());
-        Queue::assertPushed(ProcessFazerCardsOrderJob::class, 1);
+        Queue::assertPushed(ProcessRechargeGamesOrderJob::class, 1);
     }
 
     public function test_a_changed_price_asks_for_confirmation_and_charges_nothing(): void

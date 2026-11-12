@@ -19,7 +19,7 @@ To work as the app user, type `sudo -iu deploy`. Type `exit` to come back. Lines
 - A VPS with Ubuntu 24.04 LTS. A reasonable first size is 2 vCPU and 4 GB RAM (every concurrent ABA payment session adds one Chromium browser, see part 14).
 - A domain name, with an **A record** pointing to the server's IP address.
 - A private repository on GitHub (or similar) for the code.
-- Your real values: ABA PayWay payment link, FazerCards API key (and money on the FazerCards balance), a mail service (part 12).
+- Your real values: ABA PayWay payment link, RechargeGames API key (and money on the RechargeGames balance), a mail service (part 12).
 - All tests green on your own computer: `php artisan test`.
 
 ---
@@ -251,7 +251,7 @@ In `nano`: fill in every empty value and every `YOUR_DOMAIN`. Save with Ctrl+O, 
 - `PAYWAY_NODE_BINARY`: the path `which node` printed (normally `/usr/bin/node`).
 - `PAYWAY_LINK_URL`: your ABA PayWay payment link.
 - `MAIL_*`: part 12. You can come back to it.
-- `FAZERCARDS_API_KEY`: your key. Keep `FAZERCARDS_FAKE=false`. Keep `FAZERCARDS_WEBHOOK_SECRET` empty until part 13.
+- `RECHARGEGAMES_API_KEY`: your key. Keep `RECHARGEGAMES_FAKE=false`. Keep `RECHARGEGAMES_WEBHOOK_SECRET` empty until part 13.
 - `GOOGLE_*`: only if you use Google sign-in. In the Google console add `https://YOUR_DOMAIN/auth/google/callback` as an allowed redirect.
 
 Keep a copy of the finished `.env` (especially `APP_KEY`) in your password manager. It is the one file nothing else can recreate.
@@ -433,10 +433,10 @@ After any change to `.env`, always run `php artisan optimize` and `sudo supervis
 
 Do these in order, and stop at the first thing that does not behave:
 
-1. **FazerCards:** the real `FAZERCARDS_API_KEY` is in `.env`, `FAZERCARDS_FAKE=false`, and the FazerCards balance has real money on it. Run `php artisan fazercards:sync` and `php artisan fazercards:check-balance`, then look at `/admin/provider`.
-2. **Webhook secret:** only set `FAZERCARDS_WEBHOOK_SECRET` after the https site works and you have set the webhook up on the FazerCards side the way your Phase 8 notes describe. Until it is set the endpoint answers 404 on purpose.
+1. **RechargeGames:** the real `RECHARGEGAMES_API_KEY` is in `.env`, `RECHARGEGAMES_FAKE=false`, and the RechargeGames balance has real money on it. Run `php artisan rechargegames:sync` and `php artisan rechargegames:check-balance`, then look at `/admin/provider`.
+2. **Webhook secret:** only set `RECHARGEGAMES_WEBHOOK_SECRET` after the https site works and you have set the webhook up on the RechargeGames side the way your Phase 8 notes describe. Until it is set the endpoint answers 404 on purpose.
 3. **Small real deposit:** make a deposit of `DEPOSIT_MIN` (1.00) as an ordinary customer and pay the QR with your own ABA app. Check: the page turns to "paid", the wallet balance went up by exactly that amount, and `/admin/deposits` and `/admin/transactions` show it once.
-4. **Small real order:** buy the cheapest product. Check the order completes and the FazerCards balance dropped.
+4. **Small real order:** buy the cheapest product. Check the order completes and the RechargeGames balance dropped.
 5. **Failure paths:** let one QR expire without paying (the deposit must end as expired, no money added), and cancel/fail one order if you can do that safely (the wallet must be refunded once).
 6. **Health:** `php artisan ops:check --strict` passes with no WARN you cannot explain.
 
@@ -507,7 +507,7 @@ During maintenance mode callbacks to your site get a 503. Keep updates short and
 
 - [ ] DNS A record points to the server, `https://YOUR_DOMAIN` opens with a valid certificate
 - [ ] `deploy/scripts/smoke-test.sh YOUR_DOMAIN` all `OK`
-- [ ] `APP_ENV=production`, `APP_DEBUG=false`, `FAZERCARDS_FAKE=false`
+- [ ] `APP_ENV=production`, `APP_DEBUG=false`, `RECHARGEGAMES_FAKE=false`
 - [ ] `.env` is mode 600 and a copy is in your password manager
 - [ ] Root SSH login and password login are off, firewall allows only 22, 80, 443
 - [ ] `sudo supervisorctl status`: all workers RUNNING

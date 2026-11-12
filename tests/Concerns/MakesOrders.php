@@ -29,10 +29,10 @@ trait MakesOrders
     protected function setUpShop(string $funds = '20.00'): void
     {
         config([
-            'fazercards.api_key' => 'test-key-123',
-            'fazercards.fake' => false,
-            'fazercards.base_url' => 'https://api.fzr.cards/api/v2',
-            'fazercards.retry_sleep_ms' => 0,
+            'rechargegames.api_key' => 'test-key-123',
+            'rechargegames.fake' => false,
+            'rechargegames.base_url' => 'https://api.rechargegame.games',
+            'rechargegames.retry_sleep_ms' => 0,
         ]);
         Queue::fake();
 

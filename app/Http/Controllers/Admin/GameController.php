@@ -21,7 +21,7 @@ use App\Exceptions\ProviderException;
 use App\Models\Product;
 use App\Models\ProviderCategory;
 use App\Models\ProviderOffer;
-use App\Services\TopUp\FazerCardsService;
+use App\Services\TopUp\RechargeGamesService;
 use Illuminate\Support\Facades\Cache;
 
 class GameController extends Controller
@@ -99,7 +99,7 @@ class GameController extends Controller
             ->with('status', 'Game created. Add the player fields customers must fill in below.');
     }
 
-    public function edit(Game $game, FazerCardsService $provider): View
+    public function edit(Game $game, RechargeGamesService $provider): View
     {
         $game->load('fields');
 
@@ -109,12 +109,12 @@ class GameController extends Controller
 
         if (filled($game->provider_category_id)) {
             $mirror = ProviderCategory::query()
-                ->where('provider', 'fazercards')
+                ->where('provider', 'rechargegames')
                 ->where('provider_category_id', $game->provider_category_id)
                 ->first();
 
             $offerCount = ProviderOffer::query()
-                ->where('provider', 'fazercards')
+                ->where('provider', 'rechargegames')
                 ->where('provider_category_id', $game->provider_category_id)
                 ->where('is_available', true)
                 ->count();
@@ -139,14 +139,14 @@ class GameController extends Controller
      *
      * @return list<array{category_id:string,name:string,fields:list<array<string,string>>}>|null
      */
-    private function validatableGames(FazerCardsService $provider): ?array
+    private function validatableGames(RechargeGamesService $provider): ?array
     {
         if (! $provider->isConfigured()) {
             return null;
         }
 
         try {
-            return Cache::remember('fazercards:validatable', 3600, fn () => $provider->getValidatableGames());
+            return Cache::remember('rechargegames:validatable', 3600, fn () => $provider->getValidatableGames());
         } catch (ProviderException) {
             return null;
         }

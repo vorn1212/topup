@@ -30,7 +30,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
-        <env name="FAZERCARDS_API_KEY" value=""/>
-        <env name="FAZERCARDS_FAKE" value="false"/>
+        <env name="RECHARGEGAMES_API_KEY" value=""/>
+        <env name="RECHARGEGAMES_FAKE" value="false"/>
     </php>
 </phpunit>

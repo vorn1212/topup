@@ -32,7 +32,7 @@
                         </p>
                         <p class="text-xs text-gray-500">Checked {{ \Illuminate\Support\Carbon::createFromTimestamp($balance['checked_at'])->diffForHumans() }}</p>
                         @if ($balanceLow)
-                            <p class="mt-3 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">The balance is low. Top it up in the FazerCards panel. Orders that cost more than the balance are refused before the customer is charged.</p>
+                            <p class="mt-3 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">The balance is low. Top it up in the RechargeGames panel. Orders that cost more than the balance are refused before the customer is charged.</p>
                         @endif
                     @else
                         <p class="mt-2 text-sm text-gray-600">No reading yet. Press "Check now", or wait for the scheduler (every 10 minutes).</p>
@@ -46,7 +46,7 @@
                         <p class="mt-2 text-sm text-green-700">Enabled. Deliveries must be signed with the secret in your .env.</p>
                         <p class="mt-2 break-all rounded bg-gray-50 p-2 font-mono text-xs text-gray-700">{{ $webhookUrl }}</p>
                     @else
-                        <p class="mt-2 text-sm text-gray-600">Off (FAZERCARDS_WEBHOOK_SECRET is empty). Orders are still tracked by polling every minute, so nothing is lost.</p>
+                        <p class="mt-2 text-sm text-gray-600">Off (RECHARGEGAMES_WEBHOOK_SECRET is empty). Orders are still tracked by polling every minute, so nothing is lost.</p>
                     @endif
                 </div>
             </div>

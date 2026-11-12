@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Provider (FazerCards)</h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Provider (RechargeGames)</h2>
     </x-slot>
 
     <x-admin-nav />
@@ -32,7 +32,7 @@
                         </div>
                     </div>
                     @if ($lowBalance)
-                        <p class="mt-3 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">Balance is low. Top it up in the FazerCards panel, or customer orders will fail.</p>
+                        <p class="mt-3 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">Balance is low. Top it up in the RechargeGames panel, or customer orders will fail.</p>
                     @endif
                     @unless ($status['subscription_active'])
                         <p class="mt-3 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">The subscription is inactive. The provider may refuse catalog and order requests.</p>

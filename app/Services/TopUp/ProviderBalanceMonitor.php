@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Keeps a recent copy of the FazerCards wallet balance.
+ * Keeps a recent copy of the RechargeGames wallet balance.
  *
  *  - refresh() asks the provider (scheduler: every 10 minutes) and warns staff when it is low;
  *  - blocks() tells OrderService that an order would certainly fail for lack of provider funds,
@@ -20,17 +20,17 @@ use Illuminate\Support\Facades\Log;
  */
 class ProviderBalanceMonitor
 {
-    public const CACHE_KEY = 'fazercards:balance';
+    public const CACHE_KEY = 'rechargegames:balance';
 
-    private const ALERT_KEY = 'fazercards:low-balance-alerted';
+    private const ALERT_KEY = 'rechargegames:low-balance-alerted';
 
-    public function __construct(private readonly FazerCardsService $api)
+    public function __construct(private readonly RechargeGamesService $api)
     {
     }
 
     public function enabled(): bool
     {
-        return ! config('fazercards.fake') && $this->api->isConfigured();
+        return ! config('rechargegames.fake') && $this->api->isConfigured();
     }
 
     /**
@@ -45,7 +45,7 @@ class ProviderBalanceMonitor
         try {
             $balance = $this->api->getBalance();
         } catch (ProviderException $e) {
-            Log::warning('Could not read the FazerCards balance.', ['status' => $e->httpStatus]);
+            Log::warning('Could not read the RechargeGames balance.', ['status' => $e->httpStatus]);
 
             return null;
         }
@@ -58,7 +58,7 @@ class ProviderBalanceMonitor
 
         Cache::put(self::CACHE_KEY, $snapshot, now()->addHours(6));
 
-        $limit = Money::normalize((string) config('fazercards.low_balance', '20.00'));
+        $limit = Money::normalize((string) config('rechargegames.low_balance', '20.00'));
 
         if (Money::cmp($snapshot['balance'], $limit) < 0) {
             // One warning per 6 hours, not one per check.
@@ -87,7 +87,7 @@ class ProviderBalanceMonitor
         $snapshot ??= $this->snapshot();
 
         return $snapshot !== null
-            && Money::cmp($snapshot['balance'], Money::normalize((string) config('fazercards.low_balance', '20.00'))) < 0;
+            && Money::cmp($snapshot['balance'], Money::normalize((string) config('rechargegames.low_balance', '20.00'))) < 0;
     }
 
     /**
@@ -105,7 +105,7 @@ class ProviderBalanceMonitor
             return false;
         }
 
-        $maxAge = max(1, (int) config('fazercards.balance_max_age_minutes', 30)) * 60;
+        $maxAge = max(1, (int) config('rechargegames.balance_max_age_minutes', 30)) * 60;
 
         if (now()->getTimestamp() - (int) $snapshot['checked_at'] > $maxAge) {
             return false;

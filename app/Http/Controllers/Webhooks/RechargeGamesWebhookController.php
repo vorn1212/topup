@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
-use App\Services\TopUp\FazerCardsWebhook;
+use App\Services\TopUp\RechargeGamesWebhook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class FazerCardsWebhookController extends Controller
+class RechargeGamesWebhookController extends Controller
 {
-    public function __invoke(Request $request, FazerCardsWebhook $webhook): JsonResponse
+    public function __invoke(Request $request, RechargeGamesWebhook $webhook): JsonResponse
     {
         // No secret configured = the endpoint does not exist.
         if (! $webhook->isEnabled()) {
@@ -19,13 +19,13 @@ class FazerCardsWebhookController extends Controller
 
         $body = $request->getContent();
 
-        if (strlen($body) > FazerCardsWebhook::MAX_BODY_BYTES) {
+        if (strlen($body) > RechargeGamesWebhook::MAX_BODY_BYTES) {
             return response()->json(['ok' => false, 'error' => 'Payload too large.'], 413);
         }
 
         if (! $webhook->signatureIsValid($request, $body)) {
             // Not stored: anyone on the internet can send this, so it must not fill the database.
-            Log::warning('FazerCards webhook with an invalid signature.', ['ip' => $request->ip()]);
+            Log::warning('RechargeGames webhook with an invalid signature.', ['ip' => $request->ip()]);
 
             return response()->json(['ok' => false, 'error' => 'Invalid signature.'], 401);
         }

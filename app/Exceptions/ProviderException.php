@@ -23,7 +23,8 @@ class ProviderException extends RuntimeException
      */
     public function isDefinitiveRejection(): bool
     {
-        return in_array($this->httpStatus, [400, 403, 404, 422], true);
+        return in_array($this->httpStatus, [400, 403, 404, 422], true)
+            || in_array($this->providerCode, ['out_of_stock', 'insufficient_balance', 'unknown_product'], true);
     }
 
     public function isAuthError(): bool

@@ -22,7 +22,7 @@ class SecurityAccessTest extends TestCase
     use MakesCatalog, MakesOrders, RefreshDatabase;
 
     /** Mutating routes that a signed-out visitor is meant to reach. */
-    private const PUBLIC_POSTS = ['login', 'register', 'forgot-password', 'reset-password', 'webhooks/fazercards', 'checkout', 'games/{slug}/validate-player', 'locale'];
+    private const PUBLIC_POSTS = ['login', 'register', 'forgot-password', 'reset-password', 'webhooks/rechargegames', 'checkout', 'games/{slug}/validate-player', 'locale'];
 
     protected function setUp(): void
     {
@@ -127,7 +127,7 @@ class SecurityAccessTest extends TestCase
             }
         }
 
-        $this->assertSame(['webhooks/fazercards'], $off);
+        $this->assertSame(['webhooks/rechargegames'], $off);
     }
 
     public function test_money_and_provider_actions_are_rate_limited(): void
@@ -136,7 +136,7 @@ class SecurityAccessTest extends TestCase
             'orders.store', 'orders.status',
             'wallet.deposit.store', 'wallet.deposit.status', 'wallet.deposit.qr',
             'games.validate-player', 'notifications.read-all',
-            'webhooks.fazercards', 'locale.update',
+            'webhooks.rechargegames', 'locale.update',
             'admin.reports.export',
             'admin.users.status', 'admin.users.freeze', 'admin.users.role', 'admin.users.adjust',
             'admin.orders.notes.store',
@@ -178,9 +178,9 @@ class SecurityAccessTest extends TestCase
 
     public function test_the_webhook_is_closed_when_no_secret_is_configured(): void
     {
-        config(['fazercards.webhook_secret' => null]);
+        config(['rechargegames.webhook_secret' => null]);
 
-        $this->postJson('/webhooks/fazercards', ['order_id' => 'x'])->assertNotFound();
+        $this->postJson('/webhooks/rechargegames', ['order_id' => 'x'])->assertNotFound();
     }
 
     // ---------------------------------------------------------------- customers cannot reach each other's data

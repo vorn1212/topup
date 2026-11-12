@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\CheckFazerCardsOrderStatusJob;
-use App\Jobs\ProcessFazerCardsOrderJob;
+use App\Jobs\CheckRechargeGamesOrderStatusJob;
+use App\Jobs\ProcessRechargeGamesOrderJob;
 use App\Models\ProviderOrder;
 use Illuminate\Console\Command;
 
@@ -33,7 +33,7 @@ class ProcessPendingOrdersCommand extends Command
             ->get(['id', 'status']);
 
         foreach ($submit as $row) {
-            ProcessFazerCardsOrderJob::dispatch($row->id);
+            ProcessRechargeGamesOrderJob::dispatch($row->id);
         }
 
         // Do not dispatch the same order again every minute while a worker is busy or down.
@@ -48,7 +48,7 @@ class ProcessPendingOrdersCommand extends Command
             ->pluck('id');
 
         foreach ($check as $id) {
-            CheckFazerCardsOrderStatusJob::dispatch($id);
+            CheckRechargeGamesOrderStatusJob::dispatch($id);
         }
 
         ProviderOrder::query()->whereIn('id', $check)->update(['next_check_at' => $now->copy()->addSeconds(45)]);

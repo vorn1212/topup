@@ -8,9 +8,9 @@ use Illuminate\Console\Command;
 
 class CheckProviderBalanceCommand extends Command
 {
-    protected $signature = 'fazercards:check-balance';
+    protected $signature = 'rechargegames:check-balance';
 
-    protected $description = 'Read the FazerCards balance, remember it, and warn staff when it is low.';
+    protected $description = 'Read the RechargeGames balance, remember it, and warn staff when it is low.';
 
     public function handle(ProviderBalanceMonitor $monitor): int
     {

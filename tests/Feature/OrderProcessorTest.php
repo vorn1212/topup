@@ -41,10 +41,10 @@ class OrderProcessorTest extends TestCase
         parent::setUp();
 
         config([
-            'fazercards.api_key' => 'test-key-123',
-            'fazercards.fake' => false,
-            'fazercards.base_url' => 'https://api.fzr.cards/api/v2',
-            'fazercards.retry_sleep_ms' => 0,
+            'rechargegames.api_key' => 'test-key-123',
+            'rechargegames.fake' => false,
+            'rechargegames.base_url' => 'https://api.rechargegame.games',
+            'rechargegames.retry_sleep_ms' => 0,
         ]);
         Queue::fake();
 
@@ -54,9 +54,9 @@ class OrderProcessorTest extends TestCase
         $this->user = User::factory()->create();
         $this->wallets->credit($this->wallets->createWallet($this->user), '20.00', 'test:fund:1', WalletTxType::Bonus);
 
-        $game = $this->makeGame(['slug' => 'pubg-mobile', 'provider_category_id' => 'cat_pubgm_1']);
+        $game = $this->makeGame(['slug' => 'pubg-mobile', 'provider_category_id' => 'pubg-mobile/global']);
         $this->makeField($game);
-        $this->product = $this->makeProduct($game, '0.80', MarkupType::FixedMarkup, '0.20', ['provider_offer_id' => 'offer_60uc']);
+        $this->product = $this->makeProduct($game, '0.80', MarkupType::FixedMarkup, '0.20', ['provider_offer_id' => 'topup/pubg-mobile/global/60 UC']);
     }
 
     private function newOrder(): ProviderOrder
@@ -74,13 +74,13 @@ class OrderProcessorTest extends TestCase
     private function fakeCreate(string $status = 'processing', string $id = 'ord-9002'): void
     {
         Http::swap(new HttpFactory);
-        Http::fake(['*/topups/order' => Http::response(['ok' => true, 'order' => ['id' => $id, 'kind' => 'topup', 'status' => $status]])]);
+        Http::fake(['*/v1/orders' => Http::response(['order_id' => $id, 'status' => $status], 201)]);
     }
 
     private function fakeRemote(string $status, string $id = 'ord-9002'): void
     {
         Http::swap(new HttpFactory);
-        Http::fake(['*/orders/'.$id => Http::response(['ok' => true, 'order' => ['id' => $id, 'kind' => 'topup', 'status' => $status]])]);
+        Http::fake(['*/v1/orders/'.$id => Http::response(['order_id' => $id, 'status' => $status])]);
     }
 
     /** An order the provider accepted and is still working on. */
@@ -112,10 +112,10 @@ class OrderProcessorTest extends TestCase
         $this->assertSame('processing', $order->status->value);
         $this->assertSame('19.0000', $this->balance());
 
-        Http::assertSent(fn (Request $r) => $r->hasHeader('Idempotency-Key', $po->idempotency_key)
-            && $r['category_id'] === 'cat_pubgm_1'
-            && $r['offer_id'] === 'offer_60uc'
-            && ((array) $r['fields'])['player_id'] === '123456789');
+        Http::assertSent(fn (Request $r) => $r['buyer_ref'] === $po->idempotency_key
+            && $r['product_key'] === 'topup/pubg-mobile/global/60 UC'
+            && $r['region'] === 'global'
+            && $r['player_id'] === '123456789');
     }
 
     public function test_a_provider_that_completes_immediately_completes_the_order(): void
@@ -145,7 +145,7 @@ class OrderProcessorTest extends TestCase
     public function test_a_clear_refusal_on_the_first_attempt_refunds_the_customer(): void
     {
         Http::swap(new HttpFactory);
-        Http::fake(['*/topups/order' => Http::response(['ok' => false, 'error' => 'Invalid player id'], 400)]);
+        Http::fake(['*/v1/orders' => Http::response(['ok' => false, 'error' => 'Invalid player id'], 400)]);
         $po = $this->newOrder();
         $this->assertSame('19.0000', $this->balance());
 
@@ -185,7 +185,7 @@ class OrderProcessorTest extends TestCase
     public function test_server_errors_are_not_failures_either(): void
     {
         Http::swap(new HttpFactory);
-        Http::fake(['*/topups/order' => Http::response(['ok' => false, 'error' => 'boom'], 500)]);
+        Http::fake(['*/v1/orders' => Http::response(['ok' => false, 'error' => 'boom'], 500)]);
         $po = $this->newOrder();
 
         $this->processor->submit($po->id);
@@ -202,13 +202,13 @@ class OrderProcessorTest extends TestCase
         Http::swap(new HttpFactory);
         Http::fake(function (Request $request) use (&$calls, &$keys) {
             $calls++;
-            $keys[] = $request->header('Idempotency-Key')[0] ?? null;
+            $keys[] = $request['buyer_ref'] ?? null;
 
             if ($calls === 1) {
                 throw new ConnectionException('timed out');
             }
 
-            return Http::response(['ok' => true, 'order' => ['id' => 'ord-9002', 'kind' => 'topup', 'status' => 'processing']]);
+            return Http::response(['order_id' => 'ord-9002', 'status' => 'pending'], 201);
         });
 
         $po = $this->newOrder();

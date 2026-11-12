@@ -1,6 +1,6 @@
 @can('provider.manage')
     <div class="bg-white shadow-sm sm:rounded-lg p-6 space-y-4">
-        <h3 class="font-semibold text-gray-900">Provider (FazerCards)</h3>
+        <h3 class="font-semibold text-gray-900">Provider (RechargeGames)</h3>
 
         @if (blank($game->provider_category_id))
             <p class="text-sm text-gray-600">

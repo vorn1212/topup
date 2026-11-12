@@ -8,7 +8,7 @@ use App\Exceptions\ProviderTimeoutException;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Local/testing stand-in for FazerCards. Spends no money. The FIRST player field decides the outcome:
+ * Local/testing stand-in for RechargeGames. Spends no money. The FIRST player field decides the outcome:
  *   ends with 000 -> the provider refuses the order (customer is refunded)
  *   ends with 111 -> the order is created but the first answer is lost (timeout); a retry with the
  *                    same idempotency key returns the original order (the hardest real-world case)
@@ -51,7 +51,7 @@ class FakeTopUpProvider implements TopUpProvider
 
     public function getOrder(string $orderId): array
     {
-        if (! preg_match(FazerCardsService::ORDER_ID_PATTERN, $orderId)) {
+        if (! preg_match(RechargeGamesService::ORDER_ID_PATTERN, $orderId)) {
             throw new \InvalidArgumentException('Invalid provider order id.');
         }
 

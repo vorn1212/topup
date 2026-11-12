@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\WalletTxType;
-use App\Jobs\CheckFazerCardsOrderStatusJob;
-use App\Jobs\ProcessFazerCardsOrderJob;
+use App\Jobs\CheckRechargeGamesOrderStatusJob;
+use App\Jobs\ProcessRechargeGamesOrderJob;
 use App\Models\ProviderOrder;
 use App\Models\User;
 use App\Services\TopUp\OrderService;
@@ -27,7 +27,7 @@ class ProcessPendingOrdersCommandTest extends TestCase
     {
         parent::setUp();
 
-        config(['fazercards.api_key' => 'test-key-123', 'fazercards.fake' => false]);
+        config(['rechargegames.api_key' => 'test-key-123', 'rechargegames.fake' => false]);
         Queue::fake();
 
         $this->user = User::factory()->create();
@@ -68,12 +68,12 @@ class ProcessPendingOrdersCommandTest extends TestCase
 
         $this->runCommand();
 
-        Queue::assertPushed(ProcessFazerCardsOrderJob::class, 3);
+        Queue::assertPushed(ProcessRechargeGamesOrderJob::class, 3);
         foreach ([$missed, $due, $abandoned] as $po) {
-            Queue::assertPushed(ProcessFazerCardsOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
+            Queue::assertPushed(ProcessRechargeGamesOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
         }
         foreach ([$fresh, $waiting, $busy] as $po) {
-            Queue::assertNotPushed(ProcessFazerCardsOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
+            Queue::assertNotPushed(ProcessRechargeGamesOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
         }
     }
 
@@ -86,9 +86,9 @@ class ProcessPendingOrdersCommandTest extends TestCase
 
         $this->runCommand();
 
-        Queue::assertPushed(CheckFazerCardsOrderStatusJob::class, 1);
-        Queue::assertPushed(CheckFazerCardsOrderStatusJob::class, fn ($job) => $job->providerOrderId === $due->id);
-        Queue::assertNotPushed(ProcessFazerCardsOrderJob::class);
+        Queue::assertPushed(CheckRechargeGamesOrderStatusJob::class, 1);
+        Queue::assertPushed(CheckRechargeGamesOrderStatusJob::class, fn ($job) => $job->providerOrderId === $due->id);
+        Queue::assertNotPushed(ProcessRechargeGamesOrderJob::class);
     }
 
     public function test_the_same_order_is_not_queued_again_every_minute(): void
@@ -97,8 +97,8 @@ class ProcessPendingOrdersCommandTest extends TestCase
         $this->providerOrder(['status' => 'processing', 'provider_order_id' => 'ord-1', 'next_check_at' => now()->subMinute()]);
 
         $this->runCommand();
-        Queue::assertPushed(ProcessFazerCardsOrderJob::class, 1);
-        Queue::assertPushed(CheckFazerCardsOrderStatusJob::class, 1);
+        Queue::assertPushed(ProcessRechargeGamesOrderJob::class, 1);
+        Queue::assertPushed(CheckRechargeGamesOrderStatusJob::class, 1);
 
         $this->runCommand();
         Queue::assertNothingPushed();

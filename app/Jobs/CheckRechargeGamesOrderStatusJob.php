@@ -10,7 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class CheckFazerCardsOrderStatusJob implements ShouldQueue
+class CheckRechargeGamesOrderStatusJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 

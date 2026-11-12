@@ -8,7 +8,7 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Services\Payment\NodeSessionRunner;
 use App\Services\TopUp\FakeTopUpProvider;
-use App\Services\TopUp\FazerCardsService;
+use App\Services\TopUp\RechargeGamesService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -25,9 +25,9 @@ class AppServiceProvider extends ServiceProvider
 
         // The fake provider can NEVER be used outside local/testing, whatever .env says.
         $this->app->bind(TopUpProvider::class, function ($app) {
-            return config('fazercards.fake') && $app->environment(['local', 'testing'])
+            return config('rechargegames.fake') && $app->environment(['local', 'testing'])
                 ? $app->make(FakeTopUpProvider::class)
-                : $app->make(FazerCardsService::class);
+                : $app->make(RechargeGamesService::class);
         });
     }
 

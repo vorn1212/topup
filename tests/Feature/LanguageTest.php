@@ -168,9 +168,9 @@ class LanguageTest extends TestCase
 
     public function test_the_webhook_does_not_need_a_session_for_the_language(): void
     {
-        config(['fazercards.webhook_secret' => null]);
+        config(['rechargegames.webhook_secret' => null]);
 
-        $this->postJson('/webhooks/fazercards', ['x' => 1])->assertNotFound();
+        $this->postJson('/webhooks/rechargegames', ['x' => 1])->assertNotFound();
     }
 
     // ---------------------------------------------------------------- the pages

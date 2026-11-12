@@ -147,7 +147,7 @@ class OrderProcessor
         if (! $e instanceof ProviderException) {
             report($e);
         } elseif ($e->isAuthError()) {
-            Log::critical('FazerCards rejected our API key while submitting an order.', ['provider_order' => $providerOrderId]);
+            Log::critical('RechargeGames rejected our API key while submitting an order.', ['provider_order' => $providerOrderId]);
         }
 
         $orderId = (int) ProviderOrder::query()->whereKey($providerOrderId)->value('order_id');
@@ -262,7 +262,7 @@ class OrderProcessor
     private function checkFailed(int $providerOrderId, Throwable $e): void
     {
         if ($e instanceof ProviderException && $e->isAuthError()) {
-            Log::critical('FazerCards rejected our API key while checking an order.', ['provider_order' => $providerOrderId]);
+            Log::critical('RechargeGames rejected our API key while checking an order.', ['provider_order' => $providerOrderId]);
         } elseif (! $e instanceof ProviderException) {
             report($e);
         }

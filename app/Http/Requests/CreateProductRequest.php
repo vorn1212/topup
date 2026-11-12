@@ -24,7 +24,7 @@ class CreateProductRequest extends FormRequest
             'provider_offer_id' => [
                 'nullable', 'string', 'max:64',
                 Rule::unique('products', 'provider_offer_id')
-                    ->where('provider', 'fazercards')
+                    ->where('provider', 'rechargegames')
                     ->where('game_id', $this->input('game_id')),
             ],
             'status' => ['required', Rule::enum(CatalogStatus::class)],

@@ -27,7 +27,7 @@ class ProviderBalanceLowNotification extends AppNotification
 
     protected function body(): string
     {
-        return 'The FazerCards balance is '.Money::display($this->balance, $this->currency)
+        return 'The RechargeGames balance is '.Money::display($this->balance, $this->currency)
             .' (alert limit '.Money::display($this->limit, $this->currency).'). Top it up or customer orders will fail.';
     }
 

@@ -107,7 +107,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700" for="reason">Reason for this change</label>
-                    <input id="reason" name="reason" type="text" required value="{{ old('reason') }}" placeholder="FazerCards cost increase"
+                    <input id="reason" name="reason" type="text" required value="{{ old('reason') }}" placeholder="RechargeGames cost increase"
                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
                     <x-input-error :messages="$errors->get('reason')" class="mt-1" />
                 </div>

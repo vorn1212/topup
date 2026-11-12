@@ -9,7 +9,7 @@ use App\Models\ProviderCategory;
 use App\Models\ProviderOffer;
 use App\Services\AuditService;
 use App\Services\TopUp\CatalogSyncService;
-use App\Services\TopUp\FazerCardsService;
+use App\Services\TopUp\RechargeGamesService;
 use App\Services\TopUp\ProviderImportService;
 use App\Support\Money;
 use DomainException;
@@ -21,10 +21,10 @@ use RuntimeException;
 
 class ProviderController extends Controller
 {
-    public function index(Request $request, FazerCardsService $api): View
+    public function index(Request $request, RechargeGamesService $api): View
     {
         if ($request->boolean('refresh')) {
-            Cache::forget('fazercards:status');
+            Cache::forget('rechargegames:status');
         }
 
         $status = null;
@@ -32,10 +32,10 @@ class ProviderController extends Controller
         $lowBalance = false;
 
         if (! $api->isConfigured()) {
-            $error = 'FAZERCARDS_API_KEY is not set in .env (then run: php artisan config:clear).';
+            $error = 'RECHARGEGAMES_API_KEY is not set in .env (then run: php artisan config:clear).';
         } else {
             try {
-                $status = Cache::remember('fazercards:status', 60, function () use ($api) {
+                $status = Cache::remember('rechargegames:status', 60, function () use ($api) {
                     $profile = $api->getProfile();
                     $balance = $api->getBalance();
 
@@ -49,7 +49,7 @@ class ProviderController extends Controller
                     ];
                 });
 
-                $lowBalance = Money::cmp($status['balance'], (string) config('fazercards.low_balance', '20.00')) < 0;
+                $lowBalance = Money::cmp($status['balance'], (string) config('rechargegames.low_balance', '20.00')) < 0;
             } catch (ProviderException $e) {
                 $error = $e->getMessage().($e->httpStatus ? " (HTTP {$e->httpStatus})" : '');
             }
@@ -59,7 +59,7 @@ class ProviderController extends Controller
         $like = '%'.addcslashes($search, '%_\\').'%';
 
         $categories = ProviderCategory::query()
-            ->where('provider', 'fazercards')
+            ->where('provider', 'rechargegames')
             ->when($search !== '', fn ($q) => $q->where(
                 fn ($w) => $w->where('name', 'like', $like)->orWhere('provider_category_id', 'like', $like)
             ))
@@ -70,7 +70,7 @@ class ProviderController extends Controller
         $ids = $categories->pluck('provider_category_id')->all();
 
         $offerCounts = ProviderOffer::query()
-            ->where('provider', 'fazercards')
+            ->where('provider', 'rechargegames')
             ->where('is_available', true)
             ->whereIn('provider_category_id', $ids)
             ->selectRaw('provider_category_id, COUNT(*) as total')
@@ -86,7 +86,7 @@ class ProviderController extends Controller
             'status' => $status,
             'error' => $error,
             'lowBalance' => $lowBalance,
-            'lastSync' => Cache::get('fazercards:last_sync'),
+            'lastSync' => Cache::get('rechargegames:last_sync'),
             'categories' => $categories,
             'offerCounts' => $offerCounts,
             'linked' => $linked,
@@ -107,7 +107,7 @@ class ProviderController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        Cache::forget('fazercards:status');
+        Cache::forget('rechargegames:status');
 
         $message = sprintf(
             'Synced %d categories, %d offers, %d product cost change(s).',

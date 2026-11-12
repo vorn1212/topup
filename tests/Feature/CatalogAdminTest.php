@@ -292,12 +292,12 @@ class CatalogAdminTest extends TestCase
 
         $this->patch("/admin/products/{$product->id}/price", $payload)->assertSessionHasErrors('reason');
 
-        $this->patch("/admin/products/{$product->id}/price", $payload + ['reason' => 'FazerCards cost increase'])
+        $this->patch("/admin/products/{$product->id}/price", $payload + ['reason' => 'RechargeGames cost increase'])
             ->assertRedirect("/admin/products/{$product->id}/edit");
 
         $this->assertSame('1.2000', Product::find($product->id)->selling_price);
         $this->assertDatabaseHas('product_price_histories', [
-            'product_id' => $product->id, 'new_price' => '1.2000', 'reason' => 'FazerCards cost increase', 'changed_by' => $this->admin->id,
+            'product_id' => $product->id, 'new_price' => '1.2000', 'reason' => 'RechargeGames cost increase', 'changed_by' => $this->admin->id,
         ]);
     }
 

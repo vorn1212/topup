@@ -12,7 +12,7 @@ use App\Http\Controllers\User\DepositController;
 use App\Http\Controllers\User\NotificationController;
 use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\WalletController;
-use App\Http\Controllers\Webhooks\FazerCardsWebhookController;
+use App\Http\Controllers\Webhooks\RechargeGamesWebhookController;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -117,7 +117,7 @@ Route::middleware(SetLocale::class)->group(function () {
 // ---- Provider webhooks ----
 // Called by the provider's servers: no session, no cookies, no CSRF token. The request is trusted only
 // after its HMAC signature is verified, and even then it only triggers a status check.
-Route::post('/webhooks/fazercards', FazerCardsWebhookController::class)
+Route::post('/webhooks/rechargegames', RechargeGamesWebhookController::class)
     ->withoutMiddleware([
         EncryptCookies::class,
         AddQueuedCookiesToResponse::class,
@@ -126,4 +126,4 @@ Route::post('/webhooks/fazercards', FazerCardsWebhookController::class)
         ValidateCsrfToken::class,
     ])
     ->middleware('throttle:120,1')
-    ->name('webhooks.fazercards');
+    ->name('webhooks.rechargegames');

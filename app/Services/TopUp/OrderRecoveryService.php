@@ -4,8 +4,8 @@ namespace App\Services\TopUp;
 
 use App\Enums\OrderStatus;
 use App\Enums\ProviderOrderStatus;
-use App\Jobs\CheckFazerCardsOrderStatusJob;
-use App\Jobs\ProcessFazerCardsOrderJob;
+use App\Jobs\CheckRechargeGamesOrderStatusJob;
+use App\Jobs\ProcessRechargeGamesOrderJob;
 use App\Models\Order;
 use App\Models\ProviderOrder;
 use App\Models\User;
@@ -75,7 +75,7 @@ class OrderRecoveryService
             ], $actor);
         });
 
-        $this->dispatch(fn () => CheckFazerCardsOrderStatusJob::dispatch($providerOrder->id));
+        $this->dispatch(fn () => CheckRechargeGamesOrderStatusJob::dispatch($providerOrder->id));
     }
 
     /**
@@ -112,7 +112,7 @@ class OrderRecoveryService
             ], $actor);
         });
 
-        $this->dispatch(fn () => ProcessFazerCardsOrderJob::dispatch($providerOrder->id));
+        $this->dispatch(fn () => ProcessRechargeGamesOrderJob::dispatch($providerOrder->id));
     }
 
     /**

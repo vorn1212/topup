@@ -11,7 +11,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // No test may ever reach a real external API (FazerCards etc.). Tests must fake what they call.
+        // No test may ever reach a real external API (RechargeGames etc.). Tests must fake what they call.
         Http::preventStrayRequests();
     }
 }

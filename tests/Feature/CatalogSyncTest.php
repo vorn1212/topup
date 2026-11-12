@@ -9,15 +9,19 @@ use App\Models\ProductPriceHistory;
 use App\Models\ProviderCategory;
 use App\Services\TopUp\CatalogSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\MakesCatalog;
 use Tests\TestCase;
-use Illuminate\Http\Client\Factory as HttpFactory;
 
 class CatalogSyncTest extends TestCase
 {
     use MakesCatalog, RefreshDatabase;
+
+    private const K60 = 'topup/pubg-mobile/global/60 UC';
+
+    private const K325 = 'topup/pubg-mobile/global/325 UC';
 
     private $game;
 
@@ -26,50 +30,51 @@ class CatalogSyncTest extends TestCase
         parent::setUp();
 
         config([
-            'fazercards.api_key' => 'test-key-123',
-            'fazercards.base_url' => 'https://api.fzr.cards/api/v2',
-            'fazercards.retry_sleep_ms' => 0,
-            'fazercards.sync.delay_ms' => 0,
+            'rechargegames.api_key' => 'gv_live_test-key-123',
+            'rechargegames.base_url' => 'https://api.rechargegame.games',
+            'rechargegames.retry_sleep_ms' => 0,
+            'rechargegames.sync.delay_ms' => 0,
         ]);
 
-        $this->game = $this->makeGame(['slug' => 'pubg-mobile', 'provider_category_id' => 'cat_pubgm_1']);
+        $this->game = $this->makeGame(['slug' => 'pubg-mobile', 'provider_category_id' => 'pubg-mobile/global']);
     }
 
-    private function offersBody(array $offers = null): array
+    private function productsBody(?array $products = null): array
     {
         return [
-            'ok' => true,
-            'category_id' => 'cat_pubgm_1',
-            'name' => 'PUBG Mobile',
-            'offers' => $offers ?? [
-                ['offer_id' => 'offer_60uc', 'name' => '60 UC', 'price_usd' => '0.9000'],
-                ['offer_id' => 'offer_325uc', 'name' => '325 UC', 'price_usd' => '4.50'],
+            'currency' => 'USDT',
+            'categories' => [
+                [
+                    'slug' => 'pubg-mobile',
+                    'name' => 'PUBG Mobile',
+                    'kind' => 'topup',
+                    'groups' => [[
+                        'slug' => 'global',
+                        'products' => $products ?? [
+                            ['name' => '60 UC', 'price' => '0.9000', 'delivery' => 'player_id', 'product_key' => self::K60],
+                            ['name' => '325 UC', 'price' => '4.50', 'delivery' => 'player_id', 'product_key' => self::K325],
+                        ],
+                    ]],
+                ],
+                [
+                    'slug' => 'other-game',
+                    'name' => 'Other Game',
+                    'kind' => 'topup',
+                    'groups' => [[
+                        'slug' => 'global',
+                        'products' => [['name' => '10 Gems', 'price' => '0.10', 'delivery' => 'player_id', 'product_key' => 'topup/other-game/global/10 Gems']],
+                    ]],
+                ],
             ],
-            'fields' => [['key' => 'player_id', 'label' => 'Player ID', 'type' => 'text']],
         ];
     }
 
-    private function listBody(): array
-    {
-        return [
-            'ok' => true,
-            'items' => [
-                ['category_id' => 'cat_pubgm_1', 'name' => 'PUBG Mobile'],
-                ['category_id' => 'cat_other', 'name' => 'Other Game'],
-            ],
-            'meta' => ['total' => 2, 'limit' => 100, 'next_cursor' => null, 'has_more' => false],
-        ];
-    }
-
-    private function fakeCatalog(?array $offers = null): void
+    private function fakeCatalog(?array $products = null): void
     {
         // Start from a clean fake so a second call really replaces the first one.
         Http::swap(new HttpFactory);
 
-        Http::fake([
-            '*/topups/offers*' => Http::response($this->offersBody($offers)),
-            '*/topups*' => Http::response($this->listBody()),
-        ]);
+        Http::fake(['*/v1/products*' => Http::response($this->productsBody($products))]);
     }
 
     private function sync(): array
@@ -93,14 +98,14 @@ class CatalogSyncTest extends TestCase
         $this->assertSame(2, $summary['offers']);
         $this->assertSame([], $summary['errors']);
 
-        $this->assertDatabaseHas('provider_categories', ['provider_category_id' => 'cat_pubgm_1', 'name' => 'PUBG Mobile']);
-        $this->assertDatabaseHas('provider_categories', ['provider_category_id' => 'cat_other']);
+        $this->assertDatabaseHas('provider_categories', ['provider_category_id' => 'pubg-mobile/global', 'name' => 'PUBG Mobile (Global)']);
+        $this->assertDatabaseHas('provider_categories', ['provider_category_id' => 'other-game/global']);
         $this->assertDatabaseHas('provider_offers', [
-            'provider_category_id' => 'cat_pubgm_1', 'provider_offer_id' => 'offer_60uc', 'provider_cost' => '0.9000', 'is_available' => 1,
+            'provider_category_id' => 'pubg-mobile/global', 'provider_offer_id' => self::K60, 'provider_cost' => '0.9000', 'is_available' => 1,
         ]);
         $this->assertDatabaseHas('audit_logs', ['action' => 'catalog.synced']);
 
-        $category = ProviderCategory::where('provider_category_id', 'cat_pubgm_1')->firstOrFail();
+        $category = ProviderCategory::where('provider_category_id', 'pubg-mobile/global')->firstOrFail();
         $this->assertSame('player_id', $category->fields[0]['key']);
     }
 
@@ -110,14 +115,14 @@ class CatalogSyncTest extends TestCase
 
         $this->sync();
 
-        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'category_id=cat_other'));
-        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'category_id=cat_pubgm_1'));
+        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'game=other-game'));
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'game=pubg-mobile'));
     }
 
     public function test_markup_products_follow_the_new_cost_and_history_is_written(): void
     {
-        $fixed = $this->linkedProduct('offer_60uc', '0.80', MarkupType::FixedMarkup, '0.20');      // 1.00
-        $percent = $this->linkedProduct('offer_325uc', '4.00', MarkupType::PercentMarkup, '25');   // 5.00
+        $fixed = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');      // 1.00
+        $percent = $this->linkedProduct(self::K325, '4.00', MarkupType::PercentMarkup, '25');   // 5.00
         $this->fakeCatalog();
 
         $summary = $this->sync();
@@ -146,7 +151,7 @@ class CatalogSyncTest extends TestCase
 
     public function test_a_fixed_price_stays_but_is_flagged_when_the_cost_rises_above_it(): void
     {
-        $product = $this->linkedProduct('offer_325uc', '0.80', MarkupType::FixedPrice, '1.00');
+        $product = $this->linkedProduct(self::K325, '0.80', MarkupType::FixedPrice, '1.00');
         $this->fakeCatalog();
 
         $this->sync();
@@ -159,7 +164,7 @@ class CatalogSyncTest extends TestCase
 
     public function test_a_second_identical_sync_changes_nothing(): void
     {
-        $this->linkedProduct('offer_60uc', '0.80', MarkupType::FixedMarkup, '0.20');
+        $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
         $this->fakeCatalog();
 
         $first = $this->sync();
@@ -173,8 +178,8 @@ class CatalogSyncTest extends TestCase
 
     public function test_a_product_whose_offer_disappeared_becomes_unavailable_and_returns_later(): void
     {
-        $gone = $this->linkedProduct('offer_gone', '0.80', MarkupType::FixedMarkup, '0.20');
-        $hidden = $this->linkedProduct('offer_60uc', '0.80', MarkupType::FixedMarkup, '0.20', ['is_available' => false]);
+        $gone = $this->linkedProduct('topup/pubg-mobile/global/Gone', '0.80', MarkupType::FixedMarkup, '0.20');
+        $hidden = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20', ['is_available' => false]);
         $this->fakeCatalog();
 
         $summary = $this->sync();
@@ -184,21 +189,34 @@ class CatalogSyncTest extends TestCase
         $this->assertTrue($hidden->fresh()->is_available);
     }
 
+    public function test_an_out_of_stock_product_becomes_unavailable(): void
+    {
+        $product = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
+        $this->fakeCatalog([
+            ['name' => '60 UC', 'price' => '0.9000', 'delivery' => 'player_id', 'product_key' => self::K60, 'out_of_stock' => true],
+            ['name' => '325 UC', 'price' => '4.50', 'delivery' => 'player_id', 'product_key' => self::K325],
+        ]);
+
+        $this->sync();
+
+        $this->assertFalse($product->fresh()->is_available);
+    }
+
     public function test_offers_missing_from_the_response_are_marked_unavailable_in_the_mirror(): void
     {
         $this->fakeCatalog();
         $this->sync();
 
-        $this->fakeCatalog([['offer_id' => 'offer_60uc', 'name' => '60 UC', 'price_usd' => '0.9000']]);
+        $this->fakeCatalog([['name' => '60 UC', 'price' => '0.9000', 'delivery' => 'player_id', 'product_key' => self::K60]]);
         $this->sync();
 
-        $this->assertDatabaseHas('provider_offers', ['provider_offer_id' => 'offer_60uc', 'is_available' => 1]);
-        $this->assertDatabaseHas('provider_offers', ['provider_offer_id' => 'offer_325uc', 'is_available' => 0]);
+        $this->assertDatabaseHas('provider_offers', ['provider_offer_id' => self::K60, 'is_available' => 1]);
+        $this->assertDatabaseHas('provider_offers', ['provider_offer_id' => self::K325, 'is_available' => 0]);
     }
 
     public function test_an_empty_offer_list_changes_nothing(): void
     {
-        $product = $this->linkedProduct('offer_60uc', '0.80', MarkupType::FixedMarkup, '0.20');
+        $product = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
         $this->fakeCatalog([]);
 
         $summary = $this->sync();
@@ -211,26 +229,25 @@ class CatalogSyncTest extends TestCase
 
     public function test_one_failing_category_does_not_stop_the_others(): void
     {
-        $this->makeGame(['slug' => 'broken-game', 'provider_category_id' => 'cat_bad']);
-        $product = $this->linkedProduct('offer_60uc', '0.80', MarkupType::FixedMarkup, '0.20');
+        $this->makeGame(['slug' => 'broken-game', 'provider_category_id' => 'bad-game/global']);
+        $product = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
 
         Http::fake([
-            '*/topups/offers?category_id=cat_bad*' => Http::response(['ok' => false, 'error' => 'Category not found'], 404),
-            '*/topups/offers*' => Http::response($this->offersBody()),
-            '*/topups*' => Http::response($this->listBody()),
+            '*game=bad-game*' => Http::response(['error' => ['code' => 'not_found', 'message' => 'Category not found']], 404),
+            '*/v1/products*' => Http::response($this->productsBody()),
         ]);
 
         $summary = $this->sync();
 
         $this->assertCount(1, $summary['errors']);
-        $this->assertStringContainsString('cat_bad', $summary['errors'][0]);
+        $this->assertStringContainsString('bad-game/global', $summary['errors'][0]);
         $this->assertSame('0.9000', $product->fresh()->provider_cost);
     }
 
     public function test_an_authentication_error_stops_the_whole_sync(): void
     {
-        $product = $this->linkedProduct('offer_60uc', '0.80', MarkupType::FixedMarkup, '0.20');
-        Http::fake(['*' => Http::response(['ok' => false, 'error' => 'Invalid API key'], 401)]);
+        $product = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
+        Http::fake(['*' => Http::response(['error' => ['code' => 'invalid_api_key', 'message' => 'Invalid API key']], 401)]);
 
         try {
             $this->sync();
@@ -243,37 +260,37 @@ class CatalogSyncTest extends TestCase
 
     public function test_the_sync_command_runs(): void
     {
-        $this->linkedProduct('offer_60uc', '0.80', MarkupType::FixedMarkup, '0.20');
+        $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
         $this->fakeCatalog();
 
-        $this->artisan('fazercards:sync')->assertExitCode(0);
+        $this->artisan('rechargegames:sync')->assertExitCode(0);
 
-        $this->assertSame('0.9000', Product::where('provider_offer_id', 'offer_60uc')->firstOrFail()->provider_cost);
+        $this->assertSame('0.9000', Product::where('provider_offer_id', self::K60)->firstOrFail()->provider_cost);
     }
 
     public function test_the_sync_command_needs_a_key(): void
     {
-        config(['fazercards.api_key' => '']);
+        config(['rechargegames.api_key' => '']);
 
-        $this->artisan('fazercards:sync')->assertExitCode(1);
+        $this->artisan('rechargegames:sync')->assertExitCode(1);
     }
 
     public function test_the_status_command_shows_the_balance(): void
     {
         Http::fake([
-            '*/me' => Http::response(['ok' => true, 'login' => 'partner1', 'plan' => 'gold', 'subscriptionActive' => true]),
-            '*/balance' => Http::response(['ok' => true, 'balance' => '100.0000', 'currency' => 'USD']),
+            '*/v1/ping' => Http::response(['ok' => true, 'buyer' => 'partner1']),
+            '*/v1/balance' => Http::response(['balance_usdt' => '100.0000', 'balance_micro' => 100000000, 'ledger' => []]),
         ]);
 
-        $this->artisan('fazercards:status')
+        $this->artisan('rechargegames:status')
             ->expectsOutputToContain('Provider balance: 100.0000 USD')
             ->assertExitCode(0);
     }
 
     public function test_the_status_command_reports_a_rejected_key(): void
     {
-        Http::fake(['*' => Http::response(['ok' => false, 'error' => 'Invalid API key'], 401)]);
+        Http::fake(['*' => Http::response(['error' => ['code' => 'invalid_api_key', 'message' => 'Invalid API key']], 401)]);
 
-        $this->artisan('fazercards:status')->assertExitCode(1);
+        $this->artisan('rechargegames:status')->assertExitCode(1);
     }
 }

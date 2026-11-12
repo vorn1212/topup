@@ -23,10 +23,10 @@ use RuntimeException;
  */
 class CatalogSyncService
 {
-    private const PROVIDER = 'fazercards';
+    private const PROVIDER = 'rechargegames';
 
     public function __construct(
-        private readonly FazerCardsService $provider,
+        private readonly RechargeGamesService $provider,
         private readonly PricingService $pricing,
         private readonly AuditService $audit,
     ) {
@@ -40,10 +40,10 @@ class CatalogSyncService
      */
     public function sync(): array
     {
-        $lock = Cache::lock('fazercards:catalog-sync', 900);
+        $lock = Cache::lock('rechargegames:catalog-sync', 900);
 
         if (! $lock->get()) {
-            throw new RuntimeException('A FazerCards catalog sync is already running.');
+            throw new RuntimeException('A RechargeGames catalog sync is already running.');
         }
 
         try {
@@ -52,7 +52,7 @@ class CatalogSyncService
             $lock->release();
         }
 
-        Cache::put('fazercards:last_sync', ['at' => now()->toIso8601String()] + $summary, now()->addDays(2));
+        Cache::put('rechargegames:last_sync', ['at' => now()->toIso8601String()] + $summary, now()->addDays(2));
 
         $this->audit->log('catalog.synced', null, [], array_merge($summary, [
             'errors' => array_slice($summary['errors'], 0, 20),
@@ -71,10 +71,10 @@ class CatalogSyncService
      */
     public function syncCategoryNow(string $categoryId): array
     {
-        $lock = Cache::lock('fazercards:catalog-sync', 900);
+        $lock = Cache::lock('rechargegames:catalog-sync', 900);
 
         if (! $lock->get()) {
-            throw new RuntimeException('A FazerCards catalog sync is already running. Try again in a minute.');
+            throw new RuntimeException('A RechargeGames catalog sync is already running. Try again in a minute.');
         }
 
         try {
@@ -265,7 +265,7 @@ class CatalogSyncService
 
     private function pause(): void
     {
-        $ms = (int) config('fazercards.sync.delay_ms', 700);
+        $ms = (int) config('rechargegames.sync.delay_ms', 700);
 
         if ($ms > 0) {
             usleep($ms * 1000);

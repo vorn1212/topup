@@ -23,7 +23,7 @@ use InvalidArgumentException;
  */
 class ProviderImportService
 {
-    private const PROVIDER = 'fazercards';
+    private const PROVIDER = 'rechargegames';
 
     public function __construct(
         private readonly PricingService $pricing,

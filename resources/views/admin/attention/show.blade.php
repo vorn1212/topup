@@ -88,7 +88,7 @@
 
                         <div class="bg-white shadow-sm sm:rounded-lg p-5">
                             <h3 class="font-semibold text-gray-900">Mark as completed</h3>
-                            <p class="mt-1 text-sm text-gray-600">Use only after you saw in the FazerCards panel that the top-up was delivered. The customer keeps what they paid for.</p>
+                            <p class="mt-1 text-sm text-gray-600">Use only after you saw in the RechargeGames panel that the top-up was delivered. The customer keeps what they paid for.</p>
                             <form method="POST" action="{{ route('admin.attention.orders.complete', $po) }}" class="mt-3 space-y-2">
                                 @csrf
                                 <textarea name="reason" rows="2" required minlength="5" maxlength="255" class="w-full rounded-md border-gray-300 text-sm" placeholder="Reason, for example: delivered, checked order ord-123 in the provider panel"></textarea>
