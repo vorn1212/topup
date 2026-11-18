@@ -138,13 +138,13 @@ class CatalogAdminTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'game.toggled', 'subject_id' => $game->id]);
     }
 
-    public function test_a_game_with_products_cannot_be_deleted_but_an_empty_one_can(): void
+    public function test_a_game_with_products_and_an_empty_one_can_both_be_deleted(): void
     {
         $withProducts = $this->makeGame();
         $this->makeProduct($withProducts);
 
-        $this->actingAs($this->admin)->delete("/admin/games/{$withProducts->id}")->assertSessionHas('error');
-        $this->assertNotNull(Game::find($withProducts->id));
+        $this->actingAs($this->admin)->delete("/admin/games/{$withProducts->id}")->assertRedirect();
+        $this->assertNull(Game::find($withProducts->id));
 
         $this->actingAs($this->admin)->post('/admin/games', [
             'name' => 'Disposable', 'status' => 'active', 'logo' => UploadedFile::fake()->image('l.png', 100, 100),

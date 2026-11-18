@@ -202,31 +202,12 @@ class ProductController extends Controller
      * Delete a package that no order has ever used. A package with orders stays (use Disable),
      * because old orders, refunds and reports still point to it.
      */
-    public function destroy(Product $product, AuditService $audit, ImageUploader $uploader): RedirectResponse
+    public function destroy(Product $product, AuditService $audit, ImageUploader $uploader, \App\Services\Catalog\CatalogPurger $purger): RedirectResponse
     {
-        foreach (\Illuminate\Support\Facades\Schema::getTables() as $table) {
-            $name = $table['name'];
-
-            if ($name === 'product_price_histories' || ! \Illuminate\Support\Facades\Schema::hasColumn($name, 'product_id')) {
-                continue;
-            }
-
-            if (DB::table($name)->where('product_id', $product->id)->exists()) {
-                return back()->withErrors(['delete' => "{$product->name} has orders, so it cannot be deleted. Use Disable instead."]);
-            }
-        }
-
         $snapshot = ['name' => $product->name, 'sku' => $product->sku, 'game_id' => $product->game_id];
         $icon = $product->hasOwnIcon() ? $product->icon : null;
 
-        try {
-            DB::transaction(function () use ($product) {
-                ProductPriceHistory::query()->where('product_id', $product->id)->delete();
-                $product->delete();
-            });
-        } catch (\Illuminate\Database\QueryException) {
-            return back()->withErrors(['delete' => "{$product->name} is still used by other records, so it cannot be deleted. Use Disable instead."]);
-        }
+        $purger->purgeProduct($product->id); // price history goes too; orders stay with the saved names
 
         if ($icon) {
             $uploader->delete($icon);

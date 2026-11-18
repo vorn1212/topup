@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\MarkupType;
+use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\MakesCatalog;
@@ -31,14 +32,15 @@ class ProductDeleteTest extends TestCase
         $this->assertNotNull(Product::find($this->product->id));
     }
 
-    public function test_a_product_with_orders_is_kept(): void
+    public function test_a_product_with_orders_can_be_deleted_and_the_order_stays(): void
     {
-        $this->placeOrder();
+        $po = $this->placeOrder();
         $this->actingAs($this->staff('super_admin'));
 
-        $this->delete('/admin/products/'.$this->product->id)->assertSessionHasErrors('delete');
+        $this->delete('/admin/products/'.$this->product->id)->assertSessionHasNoErrors();
 
-        $this->assertNotNull(Product::find($this->product->id));
+        $this->assertNull(Product::find($this->product->id));
+        $this->assertNotNull(Order::find($po->order_id));
     }
 
     public function test_customers_cannot_delete_products(): void

@@ -242,16 +242,12 @@ class GameController extends Controller
 
     public function destroy(Game $game, ImageUploader $uploader, AuditService $audit): RedirectResponse
     {
-        if ($game->products()->exists()) {
-            return back()->with('error', 'This game has products and price history. Disable it instead of deleting it.');
-        }
-
         $audit->log('game.deleted', $game, ['name' => $game->name, 'slug' => $game->slug]);
 
         $logo = $game->logo;
         $banner = $game->banner;
         $packageIcon = $game->package_icon;
-        $game->delete(); // game_fields are removed by the foreign key cascade
+        app(\App\Services\Catalog\CatalogPurger::class)->purgeGame($game->id); // products, fields and price history go too; orders stay
 
         $uploader->delete($logo);
         $uploader->delete($banner);
