@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\WalletTxType;
-use App\Jobs\CheckRechargeGamesOrderStatusJob;
-use App\Jobs\ProcessRechargeGamesOrderJob;
+use App\Jobs\CheckHarikiOrderStatusJob;
+use App\Jobs\ProcessHarikiOrderJob;
 use App\Models\ProviderOrder;
 use App\Models\User;
 use App\Services\TopUp\OrderService;
@@ -27,7 +27,7 @@ class ProcessPendingOrdersCommandTest extends TestCase
     {
         parent::setUp();
 
-        config(['rechargegames.api_key' => 'test-key-123', 'rechargegames.fake' => false]);
+        config(['hariki.api_key' => 'test-key-123', 'hariki.fake' => false]);
         Queue::fake();
 
         $this->user = User::factory()->create();
@@ -68,12 +68,12 @@ class ProcessPendingOrdersCommandTest extends TestCase
 
         $this->runCommand();
 
-        Queue::assertPushed(ProcessRechargeGamesOrderJob::class, 3);
+        Queue::assertPushed(ProcessHarikiOrderJob::class, 3);
         foreach ([$missed, $due, $abandoned] as $po) {
-            Queue::assertPushed(ProcessRechargeGamesOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
+            Queue::assertPushed(ProcessHarikiOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
         }
         foreach ([$fresh, $waiting, $busy] as $po) {
-            Queue::assertNotPushed(ProcessRechargeGamesOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
+            Queue::assertNotPushed(ProcessHarikiOrderJob::class, fn ($job) => $job->providerOrderId === $po->id);
         }
     }
 
@@ -86,9 +86,9 @@ class ProcessPendingOrdersCommandTest extends TestCase
 
         $this->runCommand();
 
-        Queue::assertPushed(CheckRechargeGamesOrderStatusJob::class, 1);
-        Queue::assertPushed(CheckRechargeGamesOrderStatusJob::class, fn ($job) => $job->providerOrderId === $due->id);
-        Queue::assertNotPushed(ProcessRechargeGamesOrderJob::class);
+        Queue::assertPushed(CheckHarikiOrderStatusJob::class, 1);
+        Queue::assertPushed(CheckHarikiOrderStatusJob::class, fn ($job) => $job->providerOrderId === $due->id);
+        Queue::assertNotPushed(ProcessHarikiOrderJob::class);
     }
 
     public function test_the_same_order_is_not_queued_again_every_minute(): void
@@ -97,8 +97,8 @@ class ProcessPendingOrdersCommandTest extends TestCase
         $this->providerOrder(['status' => 'processing', 'provider_order_id' => 'ord-1', 'next_check_at' => now()->subMinute()]);
 
         $this->runCommand();
-        Queue::assertPushed(ProcessRechargeGamesOrderJob::class, 1);
-        Queue::assertPushed(CheckRechargeGamesOrderStatusJob::class, 1);
+        Queue::assertPushed(ProcessHarikiOrderJob::class, 1);
+        Queue::assertPushed(CheckHarikiOrderStatusJob::class, 1);
 
         $this->runCommand();
         Queue::assertNothingPushed();

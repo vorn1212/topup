@@ -14,20 +14,20 @@ Artisan::command('inspire', function () {
 Schedule::command('wallet:reconcile')->dailyAt('03:00')->withoutOverlapping();
 
 // Provider catalog and cost sync (only when an API key is configured).
-Schedule::command('rechargegames:sync')
+Schedule::command('hariki:sync')
     ->everyThirtyMinutes()
     ->withoutOverlapping(60)
     ->runInBackground()
-    ->when(fn () => filled(config('rechargegames.api_key')));
+    ->when(fn () => filled(config('hariki.api_key')));
 
 // Orders: send missed/retry-due provider orders and poll the ones being processed.
 Schedule::command('orders:process-pending')->everyMinute()->withoutOverlapping(5);
 
 // Provider wallet: remember the balance (blocks orders that would fail) and warn staff when it is low.
-Schedule::command('rechargegames:check-balance')
+Schedule::command('hariki:check-balance')
     ->everyTenMinutes()
     ->withoutOverlapping(10)
-    ->when(fn () => filled(config('rechargegames.api_key')) && ! config('rechargegames.fake'));
+    ->when(fn () => filled(config('hariki.api_key')) && ! config('hariki.fake'));
 
 // Tell staff once about every order that is waiting for a manual decision.
 Schedule::command('ops:alert')->everyFiveMinutes()->withoutOverlapping(5);

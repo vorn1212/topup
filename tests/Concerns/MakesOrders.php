@@ -29,10 +29,10 @@ trait MakesOrders
     protected function setUpShop(string $funds = '20.00'): void
     {
         config([
-            'rechargegames.api_key' => 'test-key-123',
-            'rechargegames.fake' => false,
-            'rechargegames.base_url' => 'https://api.rechargegame.games',
-            'rechargegames.retry_sleep_ms' => 0,
+            'hariki.api_key' => 'test-key-123',
+            'hariki.fake' => false,
+            'hariki.base_url' => 'https://api.harikitopup.com',
+            'hariki.retry_sleep_ms' => 0,
         ]);
         Queue::fake();
 

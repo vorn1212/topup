@@ -113,9 +113,9 @@ class SecurityHeadersTest extends TestCase
 
     public function test_the_webhook_never_answers_with_a_server_error_on_junk(): void
     {
-        config(['rechargegames.webhook_secret' => null]);
+        config(['hariki.webhook_secret' => null]);
 
-        $this->call('POST', '/webhooks/rechargegames', [], [], [], ['CONTENT_TYPE' => 'application/json'], 'not json at all')
+        $this->call('POST', '/webhooks/hariki', [], [], [], ['CONTENT_TYPE' => 'application/json'], 'not json at all')
             ->assertNotFound();
     }
 }

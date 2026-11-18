@@ -19,9 +19,9 @@ class CatalogSyncTest extends TestCase
 {
     use MakesCatalog, RefreshDatabase;
 
-    private const K60 = 'topup/pubg-mobile/global/60 UC';
+    private const K60 = 'pubgm_60';
 
-    private const K325 = 'topup/pubg-mobile/global/325 UC';
+    private const K325 = 'pubgm_325';
 
     private $game;
 
@@ -30,43 +30,26 @@ class CatalogSyncTest extends TestCase
         parent::setUp();
 
         config([
-            'rechargegames.api_key' => 'gv_live_test-key-123',
-            'rechargegames.base_url' => 'https://api.rechargegame.games',
-            'rechargegames.retry_sleep_ms' => 0,
-            'rechargegames.sync.delay_ms' => 0,
+            'hariki.api_key' => 'hrk_live_test-key-123',
+            'hariki.base_url' => 'https://api.harikitopup.com',
+            'hariki.retry_sleep_ms' => 0,
+            'hariki.sync.delay_ms' => 0,
+            'hariki.fee_per_order' => '0',
         ]);
 
-        $this->game = $this->makeGame(['slug' => 'pubg-mobile', 'provider_category_id' => 'pubg-mobile/global']);
+        $this->game = $this->makeGame(['slug' => 'pubg-mobile', 'provider_category_id' => 'pubgm']);
     }
 
     private function productsBody(?array $products = null): array
     {
-        return [
-            'currency' => 'USDT',
-            'categories' => [
-                [
-                    'slug' => 'pubg-mobile',
-                    'name' => 'PUBG Mobile',
-                    'kind' => 'topup',
-                    'groups' => [[
-                        'slug' => 'global',
-                        'products' => $products ?? [
-                            ['name' => '60 UC', 'price' => '0.9000', 'delivery' => 'player_id', 'product_key' => self::K60],
-                            ['name' => '325 UC', 'price' => '4.50', 'delivery' => 'player_id', 'product_key' => self::K325],
-                        ],
-                    ]],
-                ],
-                [
-                    'slug' => 'other-game',
-                    'name' => 'Other Game',
-                    'kind' => 'topup',
-                    'groups' => [[
-                        'slug' => 'global',
-                        'products' => [['name' => '10 Gems', 'price' => '0.10', 'delivery' => 'player_id', 'product_key' => 'topup/other-game/global/10 Gems']],
-                    ]],
-                ],
-            ],
+        $products ??= [
+            ['game_code' => 'pubgm', 'product_code' => self::K60, 'name' => '60 UC', 'price' => 0.9, 'currency' => 'USD', 'status' => 'active'],
+            ['game_code' => 'pubgm', 'product_code' => self::K325, 'name' => '325 UC', 'price' => 4.5, 'currency' => 'USD', 'status' => 'active'],
         ];
+
+        return ['success' => true, 'data' => ['products' => array_merge($products, [
+            ['game_code' => 'other', 'product_code' => 'other_10', 'name' => '10 Gems', 'price' => 0.1, 'currency' => 'USD', 'status' => 'active'],
+        ])]];
     }
 
     private function fakeCatalog(?array $products = null): void
@@ -74,7 +57,7 @@ class CatalogSyncTest extends TestCase
         // Start from a clean fake so a second call really replaces the first one.
         Http::swap(new HttpFactory);
 
-        Http::fake(['*/v1/products*' => Http::response($this->productsBody($products))]);
+        Http::fake(['*/api/v1/products*' => Http::response($this->productsBody($products))]);
     }
 
     private function sync(): array
@@ -98,14 +81,14 @@ class CatalogSyncTest extends TestCase
         $this->assertSame(2, $summary['offers']);
         $this->assertSame([], $summary['errors']);
 
-        $this->assertDatabaseHas('provider_categories', ['provider_category_id' => 'pubg-mobile/global', 'name' => 'PUBG Mobile (Global)']);
-        $this->assertDatabaseHas('provider_categories', ['provider_category_id' => 'other-game/global']);
+        $this->assertDatabaseHas('provider_categories', ['provider_category_id' => 'pubgm', 'name' => 'PUBGM']);
+        $this->assertDatabaseHas('provider_categories', ['provider_category_id' => 'other']);
         $this->assertDatabaseHas('provider_offers', [
-            'provider_category_id' => 'pubg-mobile/global', 'provider_offer_id' => self::K60, 'provider_cost' => '0.9000', 'is_available' => 1,
+            'provider_category_id' => 'pubgm', 'provider_offer_id' => self::K60, 'provider_cost' => '0.9000', 'is_available' => 1,
         ]);
         $this->assertDatabaseHas('audit_logs', ['action' => 'catalog.synced']);
 
-        $category = ProviderCategory::where('provider_category_id', 'pubg-mobile/global')->firstOrFail();
+        $category = ProviderCategory::where('provider_category_id', 'pubgm')->firstOrFail();
         $this->assertSame('player_id', $category->fields[0]['key']);
     }
 
@@ -115,8 +98,8 @@ class CatalogSyncTest extends TestCase
 
         $this->sync();
 
-        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'game=other-game'));
-        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'game=pubg-mobile'));
+        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'game=other'));
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'game=pubgm'));
     }
 
     public function test_markup_products_follow_the_new_cost_and_history_is_written(): void
@@ -178,7 +161,7 @@ class CatalogSyncTest extends TestCase
 
     public function test_a_product_whose_offer_disappeared_becomes_unavailable_and_returns_later(): void
     {
-        $gone = $this->linkedProduct('topup/pubg-mobile/global/Gone', '0.80', MarkupType::FixedMarkup, '0.20');
+        $gone = $this->linkedProduct('pubgm_gone', '0.80', MarkupType::FixedMarkup, '0.20');
         $hidden = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20', ['is_available' => false]);
         $this->fakeCatalog();
 
@@ -193,8 +176,8 @@ class CatalogSyncTest extends TestCase
     {
         $product = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
         $this->fakeCatalog([
-            ['name' => '60 UC', 'price' => '0.9000', 'delivery' => 'player_id', 'product_key' => self::K60, 'out_of_stock' => true],
-            ['name' => '325 UC', 'price' => '4.50', 'delivery' => 'player_id', 'product_key' => self::K325],
+            ['game_code' => 'pubgm', 'product_code' => self::K60, 'name' => '60 UC', 'price' => 0.9, 'status' => 'inactive'],
+            ['game_code' => 'pubgm', 'product_code' => self::K325, 'name' => '325 UC', 'price' => 4.5, 'status' => 'active'],
         ]);
 
         $this->sync();
@@ -207,7 +190,7 @@ class CatalogSyncTest extends TestCase
         $this->fakeCatalog();
         $this->sync();
 
-        $this->fakeCatalog([['name' => '60 UC', 'price' => '0.9000', 'delivery' => 'player_id', 'product_key' => self::K60]]);
+        $this->fakeCatalog([['game_code' => 'pubgm', 'product_code' => self::K60, 'name' => '60 UC', 'price' => 0.9, 'status' => 'active']]);
         $this->sync();
 
         $this->assertDatabaseHas('provider_offers', ['provider_offer_id' => self::K60, 'is_available' => 1]);
@@ -229,25 +212,25 @@ class CatalogSyncTest extends TestCase
 
     public function test_one_failing_category_does_not_stop_the_others(): void
     {
-        $this->makeGame(['slug' => 'broken-game', 'provider_category_id' => 'bad-game/global']);
+        $this->makeGame(['slug' => 'broken-game', 'provider_category_id' => 'bad-game']);
         $product = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
 
         Http::fake([
-            '*game=bad-game*' => Http::response(['error' => ['code' => 'not_found', 'message' => 'Category not found']], 404),
-            '*/v1/products*' => Http::response($this->productsBody()),
+            '*game=bad-game*' => Http::response(['success' => false, 'message' => 'Game not found'], 404),
+            '*/api/v1/products*' => Http::response($this->productsBody()),
         ]);
 
         $summary = $this->sync();
 
         $this->assertCount(1, $summary['errors']);
-        $this->assertStringContainsString('bad-game/global', $summary['errors'][0]);
+        $this->assertStringContainsString('bad-game', $summary['errors'][0]);
         $this->assertSame('0.9000', $product->fresh()->provider_cost);
     }
 
     public function test_an_authentication_error_stops_the_whole_sync(): void
     {
         $product = $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
-        Http::fake(['*' => Http::response(['error' => ['code' => 'invalid_api_key', 'message' => 'Invalid API key']], 401)]);
+        Http::fake(['*' => Http::response(['success' => false, 'message' => 'Invalid API key'], 401)]);
 
         try {
             $this->sync();
@@ -263,34 +246,33 @@ class CatalogSyncTest extends TestCase
         $this->linkedProduct(self::K60, '0.80', MarkupType::FixedMarkup, '0.20');
         $this->fakeCatalog();
 
-        $this->artisan('rechargegames:sync')->assertExitCode(0);
+        $this->artisan('hariki:sync')->assertExitCode(0);
 
         $this->assertSame('0.9000', Product::where('provider_offer_id', self::K60)->firstOrFail()->provider_cost);
     }
 
     public function test_the_sync_command_needs_a_key(): void
     {
-        config(['rechargegames.api_key' => '']);
+        config(['hariki.api_key' => '']);
 
-        $this->artisan('rechargegames:sync')->assertExitCode(1);
+        $this->artisan('hariki:sync')->assertExitCode(1);
     }
 
     public function test_the_status_command_shows_the_balance(): void
     {
         Http::fake([
-            '*/v1/ping' => Http::response(['ok' => true, 'buyer' => 'partner1']),
-            '*/v1/balance' => Http::response(['balance_usdt' => '100.0000', 'balance_micro' => 100000000, 'ledger' => []]),
+            '*/api/v1/profile' => Http::response(['success' => true, 'data' => ['email' => 'partner1@example.com', 'balance' => 100, 'currency' => 'USD', 'subscription' => ['active' => true, 'plan' => 'Monthly Plan']]]),
         ]);
 
-        $this->artisan('rechargegames:status')
+        $this->artisan('hariki:status')
             ->expectsOutputToContain('Provider balance: 100.0000 USD')
             ->assertExitCode(0);
     }
 
     public function test_the_status_command_reports_a_rejected_key(): void
     {
-        Http::fake(['*' => Http::response(['error' => ['code' => 'invalid_api_key', 'message' => 'Invalid API key']], 401)]);
+        Http::fake(['*' => Http::response(['success' => false, 'message' => 'Invalid API key'], 401)]);
 
-        $this->artisan('rechargegames:status')->assertExitCode(1);
+        $this->artisan('hariki:status')->assertExitCode(1);
     }
 }

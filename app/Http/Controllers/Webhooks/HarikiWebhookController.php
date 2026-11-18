@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
-use App\Services\TopUp\RechargeGamesWebhook;
+use App\Services\TopUp\HarikiWebhook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class RechargeGamesWebhookController extends Controller
+class HarikiWebhookController extends Controller
 {
-    public function __invoke(Request $request, RechargeGamesWebhook $webhook): JsonResponse
+    public function __invoke(Request $request, HarikiWebhook $webhook): JsonResponse
     {
         // No secret configured = the endpoint does not exist.
         if (! $webhook->isEnabled()) {
@@ -19,13 +19,13 @@ class RechargeGamesWebhookController extends Controller
 
         $body = $request->getContent();
 
-        if (strlen($body) > RechargeGamesWebhook::MAX_BODY_BYTES) {
+        if (strlen($body) > HarikiWebhook::MAX_BODY_BYTES) {
             return response()->json(['ok' => false, 'error' => 'Payload too large.'], 413);
         }
 
         if (! $webhook->signatureIsValid($request, $body)) {
             // Not stored: anyone on the internet can send this, so it must not fill the database.
-            Log::warning('RechargeGames webhook with an invalid signature.', ['ip' => $request->ip()]);
+            Log::warning('Hariki webhook with an invalid signature.', ['ip' => $request->ip()]);
 
             return response()->json(['ok' => false, 'error' => 'Invalid signature.'], 401);
         }

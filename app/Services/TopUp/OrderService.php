@@ -9,7 +9,7 @@ use App\Enums\ProviderOrderStatus;
 use App\Enums\WalletTxType;
 use App\Exceptions\OrderRejectedException;
 use App\Exceptions\PriceChangedException;
-use App\Jobs\ProcessRechargeGamesOrderJob;
+use App\Jobs\ProcessHarikiOrderJob;
 use App\Models\Game;
 use App\Models\Order;
 use App\Models\Product;
@@ -141,7 +141,7 @@ class OrderService
                 $providerOrder = new ProviderOrder;
                 $providerOrder->forceFill([
                     'order_id' => $order->id,
-                    'provider' => 'rechargegames',
+                    'provider' => 'hariki',
                     // One random key per logical order, reused by EVERY retry of this order.
                     'idempotency_key' => (string) Str::uuid(),
                     'category_id' => $game->provider_category_id,
@@ -181,7 +181,7 @@ class OrderService
     {
         try {
             $id = ProviderOrder::query()->where('order_id', $order->id)->value('id');
-            ProcessRechargeGamesOrderJob::dispatch((int) $id);
+            ProcessHarikiOrderJob::dispatch((int) $id);
         } catch (Throwable $e) {
             // The order is safely stored: orders:process-pending will pick it up within a minute.
             report($e);
