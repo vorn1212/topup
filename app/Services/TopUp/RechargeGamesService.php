@@ -193,13 +193,13 @@ class RechargeGamesService implements TopUpProvider
     // ---------------------------------------------------------------- player validation
 
     /**
-     * RechargeGames has no general Player ID check, so the site's player check is switched off.
+     * RechargeGames has no general Player ID check, so the check goes through FazerCards (player check only).
      *
      * @return list<array{category_id:string,name:string,fields:list<array{key:string,label:string,type:string}>}>
      */
     public function getValidatableGames(): array
     {
-        return [];
+        return app(FazerCardsPlayerCheck::class)->getValidatableGames();
     }
 
     /**
@@ -208,7 +208,7 @@ class RechargeGamesService implements TopUpProvider
      */
     public function validatePlayer(string $categoryId, array $fields): array
     {
-        throw new ProviderException('RechargeGames does not offer a Player ID check.');
+        return app(FazerCardsPlayerCheck::class)->validatePlayer($categoryId, $fields);
     }
 
     // ---------------------------------------------------------------- orders

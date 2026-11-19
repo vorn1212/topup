@@ -16,7 +16,7 @@ class PlayerAutoCheckPageTest extends TestCase
     {
         parent::setUp();
 
-        config(['rechargegames.api_key' => 'test-key-123', 'rechargegames.fake' => false]);
+        config(['rechargegames.api_key' => 'test-key-123', 'rechargegames.fake' => false, 'fazercards.api_key' => 'test-key-123']);
     }
 
     private function game(array $attributes = []): Game
@@ -67,7 +67,7 @@ class PlayerAutoCheckPageTest extends TestCase
     public function test_nothing_is_shown_without_a_provider_key(): void
     {
         $this->game();
-        config(['rechargegames.api_key' => '']);
+        config(['rechargegames.api_key' => '', 'fazercards.api_key' => '']);
 
         $this->actingAs(User::factory()->create())->get('/games/pubg-mobile/top-up')
             ->assertOk()

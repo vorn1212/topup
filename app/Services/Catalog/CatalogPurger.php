@@ -127,7 +127,7 @@ class CatalogPurger
             }
         });
 
-        Cache::forget('hariki:validatable');
+        Cache::forget('rechargegames:validatable');
 
         return $total;
     }
