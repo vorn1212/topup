@@ -3,90 +3,69 @@
 namespace App\Services\TopUp;
 
 use App\Enums\ProviderOrderStatus;
-use App\Jobs\CheckHarikiOrderStatusJob;
+use App\Jobs\CheckRechargeGamesOrderStatusJob;
 use App\Models\ProviderOrder;
 use App\Models\WebhookEvent;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 /**
- * Receives Hariki webhooks. X-Hariki-Signature "t=<ts>,v1=..,v2=..", X-Hariki-Timestamp, X-Hariki-Content-Digest.
+ * Receives RechargeGames webhooks (Standard Webhooks signing).
  *
- * The webhook is only a WAKE-UP CALL. Its content never changes an order by itself:
- *  1. signature, digest and timestamp must be valid;
- *  2. we read our ref_order from the payload and find our provider order;
- *  3. we ask Hariki once (GET /order/{ref}) for the real status. The wake flag lets that one lookup through.
+ * The webhook is only a WAKE-UP CALL. Its content is never trusted to change an order:
+ *  1. the signature must be valid and the timestamp recent;
+ *  2. we read the provider order id (ORD-XXXXXX) from the payload;
+ *  3. we ask the provider for the real status of that order (same code path as polling).
+ * So a replayed, reordered or odd-looking payload can never complete or refund an order by itself.
  *
- * Hariki has not published how v1..v5 differ, so a delivery is accepted when ANY of them equals the
- * HMAC-SHA256 (hex or base64) of "<timestamp>.<raw body>" under the secret (as text or base64-decoded).
+ * Signature: base64( HMAC-SHA256( "{webhook-id}.{webhook-timestamp}.{raw body}", key ) ), sent as
+ * "v1,<signature>" (possibly several, space separated). key = base64-decoded part of the whsec_ secret.
  */
-class HarikiWebhook
+class RechargeGamesWebhook
 {
-    public const PROVIDER = 'hariki';
+    public const PROVIDER = 'rechargegames';
 
     public const MAX_BODY_BYTES = 65536;
 
     public function isEnabled(): bool
     {
-        return filled(config('hariki.webhook_secret'));
+        return filled(config('rechargegames.webhook_secret'));
     }
 
     public function signatureIsValid(Request $request, string $body): bool
     {
-        $secret = trim((string) config('hariki.webhook_secret'));
-        $timestamp = trim((string) $request->header('X-Hariki-Timestamp', ''));
-        $header = trim((string) $request->header('X-Hariki-Signature', ''));
+        $key = $this->key();
 
-        if ($secret === '' || $header === '' || ! ctype_digit($timestamp)) {
+        if ($key === null) {
             return false;
         }
 
-        if (abs(now()->getTimestamp() - (int) $timestamp) > max(1, (int) config('hariki.webhook_tolerance', 300))) {
+        $id = trim((string) $request->header('webhook-id', ''));
+        $timestamp = trim((string) $request->header('webhook-timestamp', ''));
+        $header = trim((string) $request->header('webhook-signature', ''));
+
+        if ($id === '' || $header === '' || ! ctype_digit($timestamp)) {
             return false;
         }
 
-        $digest = trim((string) $request->header('X-Hariki-Content-Digest', ''));
+        $tolerance = max(1, (int) config('rechargegames.webhook_tolerance', 300));
 
-        if ($digest !== '' && ! hash_equals('sha256='.hash('sha256', $body), strtolower($digest))) {
+        if (abs(now()->getTimestamp() - (int) $timestamp) > $tolerance) {
             return false;
         }
 
-        $keys = [$secret];
+        $expected = base64_encode(hash_hmac('sha256', $id.'.'.$timestamp.'.'.$body, $key, true));
 
-        if (str_starts_with($secret, 'whsec_')) {
-            $keys[] = substr($secret, 6);
-            $decoded = base64_decode(substr($secret, 6), true);
+        foreach (preg_split('/\s+/', $header) ?: [] as $part) {
+            [$version, $signature] = array_pad(explode(',', $part, 2), 2, '');
 
-            if ($decoded !== false && $decoded !== '') {
-                $keys[] = $decoded;
+            if ($version === 'v1' && $signature !== '' && hash_equals($expected, $signature)) {
+                return true;
             }
         }
 
-        $candidates = [];
-
-        foreach ($keys as $key) {
-            $raw = hash_hmac('sha256', $timestamp.'.'.$body, $key, true);
-            $candidates[] = bin2hex($raw);
-            $candidates[] = base64_encode($raw);
-        }
-
-        $ok = false;
-
-        foreach (explode(',', $header) as $part) {
-            [$name, $value] = array_pad(explode('=', trim($part), 2), 2, '');
-
-            if (! preg_match('/^v[1-5]$/', $name) || $value === '') {
-                continue;
-            }
-
-            foreach ($candidates as $candidate) {
-                $ok = hash_equals($candidate, $value) || $ok;
-            }
-        }
-
-        return $ok;
+        return false;
     }
 
     /**
@@ -136,7 +115,7 @@ class HarikiWebhook
         }
 
         if ($orderId === null) {
-            return ['ignored', 'No ref_order in the payload.'];
+            return ['ignored', 'No order id in the payload.'];
         }
 
         $po = ProviderOrder::query()
@@ -145,25 +124,40 @@ class HarikiWebhook
             ->first();
 
         if (! $po) {
-            return ['ignored', "No order of ours has the reference {$orderId}."];
+            return ['ignored', "No order of ours has the provider id {$orderId}."];
         }
 
         if ($po->status !== ProviderOrderStatus::Processing) {
             return ['ignored', "Order is already {$po->status->value}; nothing to do."];
         }
 
-        // Lets exactly one status lookup through the "do not poll" guard.
-        Cache::put('hariki:wake:'.$orderId, true, now()->addMinutes(10));
-
         $po->forceFill(['next_check_at' => now()])->save();
 
         try {
-            CheckHarikiOrderStatusJob::dispatch($po->id);
+            CheckRechargeGamesOrderStatusJob::dispatch($po->id);
         } catch (Throwable $e) {
+            // Not fatal: orders:process-pending polls it within a minute.
             report($e);
         }
 
         return ['processed', 'A status check was queued.'];
+    }
+
+    private function key(): ?string
+    {
+        $secret = trim((string) config('rechargegames.webhook_secret'));
+
+        if ($secret === '') {
+            return null;
+        }
+
+        if (str_starts_with($secret, 'whsec_')) {
+            $decoded = base64_decode(substr($secret, 6), true);
+
+            return $decoded === false || $decoded === '' ? null : $decoded;
+        }
+
+        return $secret;
     }
 
     /**
@@ -175,8 +169,8 @@ class HarikiWebhook
             return null;
         }
 
-        if (isset($data['ref_order']) && is_string($data['ref_order']) && preg_match(HarikiService::ORDER_ID_PATTERN, $data['ref_order'])) {
-            return $data['ref_order'];
+        if (isset($data['order_id']) && is_string($data['order_id']) && preg_match(RechargeGamesService::ORDER_ID_PATTERN, $data['order_id'])) {
+            return $data['order_id'];
         }
 
         foreach ($data as $value) {

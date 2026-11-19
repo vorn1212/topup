@@ -10,14 +10,13 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class ProcessHarikiOrderJob implements ShouldQueue
+class CheckRechargeGamesOrderStatusJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    // Retries are decided by OrderProcessor (same idempotency key, backoff), not by the queue.
     public int $tries = 1;
 
-    public int $timeout = 120;
+    public int $timeout = 60;
 
     public function __construct(public int $providerOrderId)
     {
@@ -26,12 +25,11 @@ class ProcessHarikiOrderJob implements ShouldQueue
 
     public function handle(OrderProcessor $processor): void
     {
-        $processor->submit($this->providerOrderId);
+        $processor->check($this->providerOrderId);
     }
 
     public function failed(Throwable $exception): void
     {
-        // The provider order stays "submitting": orders:process-pending re-sends it later with the SAME key.
-        Log::error('Order submit job crashed', ['provider_order' => $this->providerOrderId, 'error' => $exception->getMessage()]);
+        Log::error('Order status job crashed', ['provider_order' => $this->providerOrderId, 'error' => $exception->getMessage()]);
     }
 }

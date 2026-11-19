@@ -41,10 +41,10 @@ class OrderProcessorTest extends TestCase
         parent::setUp();
 
         config([
-            'hariki.api_key' => 'test-key-123',
-            'hariki.fake' => false,
-            'hariki.base_url' => 'https://api.harikitopup.com',
-            'hariki.retry_sleep_ms' => 0,
+            'rechargegames.api_key' => 'test-key-123',
+            'rechargegames.fake' => false,
+            'rechargegames.base_url' => 'https://api.rechargegame.games',
+            'rechargegames.retry_sleep_ms' => 0,
         ]);
         Queue::fake();
 
@@ -54,9 +54,9 @@ class OrderProcessorTest extends TestCase
         $this->user = User::factory()->create();
         $this->wallets->credit($this->wallets->createWallet($this->user), '20.00', 'test:fund:1', WalletTxType::Bonus);
 
-        $game = $this->makeGame(['slug' => 'pubg-mobile', 'provider_category_id' => 'pubgm']);
+        $game = $this->makeGame(['slug' => 'pubg-mobile', 'provider_category_id' => 'pubg-mobile/global']);
         $this->makeField($game);
-        $this->product = $this->makeProduct($game, '0.80', MarkupType::FixedMarkup, '0.20', ['provider_offer_id' => 'pubgm_60']);
+        $this->product = $this->makeProduct($game, '0.80', MarkupType::FixedMarkup, '0.20', ['provider_offer_id' => 'topup/pubg-mobile/global/60 UC']);
     }
 
     private function newOrder(): ProviderOrder
@@ -71,26 +71,16 @@ class OrderProcessorTest extends TestCase
         return $this->wallets->getBalance($this->user);
     }
 
-    /** Maps the old neutral test statuses to Hariki's SUCCESS / FAILED / PENDING. */
-    private function hariki(string $status): string
-    {
-        return match ($status) {
-            'completed' => 'SUCCESS',
-            'failed', 'refund' => 'FAILED',
-            default => 'PENDING',
-        };
-    }
-
     private function fakeCreate(string $status = 'processing', string $id = 'ord-9002'): void
     {
         Http::swap(new HttpFactory);
-        Http::fake(['*/api/v1/order' => Http::response(['success' => true, 'data' => ['order_id' => 'H-1', 'status' => $this->hariki($status)]])]);
+        Http::fake(['*/v1/orders' => Http::response(['order_id' => $id, 'status' => $status], 201)]);
     }
 
     private function fakeRemote(string $status, string $id = 'ord-9002'): void
     {
         Http::swap(new HttpFactory);
-        Http::fake(['*/api/v1/order/*' => Http::response(['success' => true, 'data' => ['order_id' => 'H-1', 'status' => $this->hariki($status)]])]);
+        Http::fake(['*/v1/orders/'.$id => Http::response(['order_id' => $id, 'status' => $status])]);
     }
 
     /** An order the provider accepted and is still working on. */
@@ -116,16 +106,16 @@ class OrderProcessorTest extends TestCase
         $order = Order::find($po->order_id);
 
         $this->assertSame('processing', $po->status->value);
-        $this->assertSame($po->idempotency_key, $po->provider_order_id);
+        $this->assertSame('ord-9002', $po->provider_order_id);
         $this->assertSame(1, $po->attempts);
         $this->assertTrue($po->next_check_at->isFuture());
         $this->assertSame('processing', $order->status->value);
         $this->assertSame('19.0000', $this->balance());
 
-        Http::assertSent(fn (Request $r) => $r['ref_order'] === $po->idempotency_key
-            && $r['product_code'] === 'pubgm_60'
-            && $r['game_code'] === 'pubgm'
-            && $r['user_id'] === '123456789');
+        Http::assertSent(fn (Request $r) => $r['buyer_ref'] === $po->idempotency_key
+            && $r['product_key'] === 'topup/pubg-mobile/global/60 UC'
+            && $r['region'] === 'global'
+            && $r['player_id'] === '123456789');
     }
 
     public function test_a_provider_that_completes_immediately_completes_the_order(): void
@@ -155,7 +145,7 @@ class OrderProcessorTest extends TestCase
     public function test_a_clear_refusal_on_the_first_attempt_refunds_the_customer(): void
     {
         Http::swap(new HttpFactory);
-        Http::fake(['*/api/v1/order' => Http::response(['ok' => false, 'error' => 'Invalid player id'], 400)]);
+        Http::fake(['*/v1/orders' => Http::response(['ok' => false, 'error' => 'Invalid player id'], 400)]);
         $po = $this->newOrder();
         $this->assertSame('19.0000', $this->balance());
 
@@ -195,7 +185,7 @@ class OrderProcessorTest extends TestCase
     public function test_server_errors_are_not_failures_either(): void
     {
         Http::swap(new HttpFactory);
-        Http::fake(['*/api/v1/order' => Http::response(['ok' => false, 'error' => 'boom'], 500)]);
+        Http::fake(['*/v1/orders' => Http::response(['ok' => false, 'error' => 'boom'], 500)]);
         $po = $this->newOrder();
 
         $this->processor->submit($po->id);
@@ -212,13 +202,13 @@ class OrderProcessorTest extends TestCase
         Http::swap(new HttpFactory);
         Http::fake(function (Request $request) use (&$calls, &$keys) {
             $calls++;
-            $keys[] = $request['ref_order'] ?? null;
+            $keys[] = $request['buyer_ref'] ?? null;
 
             if ($calls === 1) {
                 throw new ConnectionException('timed out');
             }
 
-            return Http::response(['success' => true, 'data' => ['order_id' => 'H-1', 'status' => 'PENDING']]);
+            return Http::response(['order_id' => 'ord-9002', 'status' => 'pending'], 201);
         });
 
         $po = $this->newOrder();
@@ -359,7 +349,7 @@ class OrderProcessorTest extends TestCase
         $po = $this->processingOrder();
 
         Http::swap(new HttpFactory);
-        Http::fake(['*/api/v1/order/*' => Http::response(['ok' => false, 'error' => 'boom'], 500)]);
+        Http::fake(['*/orders/*' => Http::response(['ok' => false, 'error' => 'boom'], 500)]);
         $this->processor->check($po->id);
 
         $po = $po->fresh();

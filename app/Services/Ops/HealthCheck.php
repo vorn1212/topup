@@ -70,11 +70,11 @@ final class HealthCheck
             ['failed_jobs', 'Queue and scheduler', 'Failed jobs', 'checkFailedJobs'],
             ['stuck_jobs', 'Queue and scheduler', 'Waiting jobs', 'checkStuckJobs'],
 
-            ['provider_mode', 'Provider (Hariki)', 'Fake mode', 'checkProviderMode'],
-            ['provider_key', 'Provider (Hariki)', 'API key', 'checkProviderKey'],
-            ['provider_balance', 'Provider (Hariki)', 'Provider balance', 'checkProviderBalance'],
-            ['webhook', 'Provider (Hariki)', 'Webhook', 'checkWebhook'],
-            ['orders', 'Provider (Hariki)', 'Orders needing attention', 'checkOrders'],
+            ['provider_mode', 'Provider (RechargeGames)', 'Fake mode', 'checkProviderMode'],
+            ['provider_key', 'Provider (RechargeGames)', 'API key', 'checkProviderKey'],
+            ['provider_balance', 'Provider (RechargeGames)', 'Provider balance', 'checkProviderBalance'],
+            ['webhook', 'Provider (RechargeGames)', 'Webhook', 'checkWebhook'],
+            ['orders', 'Provider (RechargeGames)', 'Orders needing attention', 'checkOrders'],
 
             ['payway_url', 'Deposits (ABA PayWay)', 'Payment link', 'checkPayWayUrl'],
             ['payway_worker', 'Deposits (ABA PayWay)', 'Payment worker', 'checkPayWayWorker'],
@@ -362,10 +362,10 @@ final class HealthCheck
     /** @return array{0:string,1:string} */
     private function checkProviderMode(): array
     {
-        if (config('hariki.fake')) {
+        if (config('rechargegames.fake')) {
             return $this->production()
-                ? [self::FAIL, 'HARIKI_FAKE=true: orders are NOT sent to Hariki, so customers would pay and receive nothing. Set it to false.']
-                : [self::WARN, 'Fake provider is ON (test mode): orders are not sent to Hariki. Set HARIKI_FAKE=false before real orders.'];
+                ? [self::FAIL, 'RECHARGEGAMES_FAKE=true: orders are NOT sent to RechargeGames, so customers would pay and receive nothing. Set it to false.']
+                : [self::WARN, 'Fake provider is ON (test mode): orders are not sent to RechargeGames. Set RECHARGEGAMES_FAKE=false before real orders.'];
         }
 
         return [self::PASS, 'Off: orders go to the real provider.'];
@@ -374,8 +374,8 @@ final class HealthCheck
     /** @return array{0:string,1:string} */
     private function checkProviderKey(): array
     {
-        return blank(config('hariki.api_key'))
-            ? [$this->bad(), 'HARIKI_API_KEY is empty, so orders cannot be sent.']
+        return blank(config('rechargegames.api_key'))
+            ? [$this->bad(), 'RECHARGEGAMES_API_KEY is empty, so orders cannot be sent.']
             : [self::PASS, 'Set.'];
     }
 
@@ -391,19 +391,19 @@ final class HealthCheck
         $snapshot = $monitor->snapshot();
 
         if ($snapshot === null) {
-            return [self::WARN, 'No balance reading yet. Run: php artisan hariki:check-balance'];
+            return [self::WARN, 'No balance reading yet. Run: php artisan rechargegames:check-balance'];
         }
 
         $age = $this->age((int) $snapshot['checked_at']);
         $money = $snapshot['balance'].' '.($snapshot['currency'] ?? '');
-        $maxAge = max(1, (int) config('hariki.balance_max_age_minutes', 30)) * 60;
+        $maxAge = max(1, (int) config('rechargegames.balance_max_age_minutes', 30)) * 60;
 
         if ($age > $maxAge) {
             return [self::WARN, 'The last balance reading ('.$money.') is '.$this->human($age).' old. Is the scheduler running?'];
         }
 
         if ($monitor->isLow($snapshot)) {
-            return [self::WARN, 'Provider balance is '.$money.', below your alert limit. Top it up in the Hariki panel or orders will fail.'];
+            return [self::WARN, 'Provider balance is '.$money.', below your alert limit. Top it up in the RechargeGames panel or orders will fail.'];
         }
 
         return [self::PASS, $money.' (checked '.$this->human($age).' ago).'];
@@ -412,7 +412,7 @@ final class HealthCheck
     /** @return array{0:string,1:string} */
     private function checkWebhook(): array
     {
-        return filled(config('hariki.webhook_secret'))
+        return filled(config('rechargegames.webhook_secret'))
             ? [self::PASS, 'On. Only correctly signed deliveries are accepted.']
             : [self::PASS, 'Off (no secret set). Orders are still tracked by polling every minute.'];
     }

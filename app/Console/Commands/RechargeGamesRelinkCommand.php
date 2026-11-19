@@ -13,11 +13,11 @@ use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
 
-class HarikiRelinkCommand extends Command
+class RechargeGamesRelinkCommand extends Command
 {
-    protected $signature = 'hariki:relink {game : the game slug} {category : Hariki category, the game code, like mlbb}';
+    protected $signature = 'rechargegames:relink {game : the game slug} {category : RechargeGames category, like free-fire/brazil}';
 
-    protected $description = 'Link a game to a Hariki category and re-attach its existing products by matching names (prices and markups are kept).';
+    protected $description = 'Link a game to a RechargeGames category and re-attach its existing products by matching names (prices and markups are kept).';
 
     public function handle(CatalogSyncService $sync, PricingService $pricing): int
     {
@@ -42,7 +42,7 @@ class HarikiRelinkCommand extends Command
             return self::FAILURE;
         }
 
-        $game->forceFill(['provider' => 'hariki', 'provider_category_id' => $category, 'validation_category_id' => $category])->save();
+        $game->forceFill(['provider' => 'rechargegames', 'provider_category_id' => $category])->save();
 
         try {
             $sync->syncCategoryNow($category);
@@ -53,7 +53,7 @@ class HarikiRelinkCommand extends Command
         }
 
         $offers = ProviderOffer::query()
-            ->where('provider', 'hariki')
+            ->where('provider', 'rechargegames')
             ->where('provider_category_id', $category)
             ->where('is_available', true)
             ->get()
@@ -64,12 +64,12 @@ class HarikiRelinkCommand extends Command
 
         $products = Product::query()
             ->where('game_id', $game->id)
-            ->where('provider', '!=', 'hariki')
+            ->where('provider', '!=', 'rechargegames')
             ->orderBy('id')
             ->get();
 
         foreach ($products as $product) {
-            $offer = $offers->get($this->normalize($product->name)) ?? $this->byNumber($offers, $product->name);
+            $offer = $offers->get($this->normalize($product->name));
 
             if ($offer === null) {
                 $unmatched[] = $product->name;
@@ -79,7 +79,7 @@ class HarikiRelinkCommand extends Command
 
             try {
                 $product->forceFill([
-                    'provider' => 'hariki',
+                    'provider' => 'rechargegames',
                     'provider_offer_id' => $offer->provider_offer_id,
                     'is_available' => true,
                 ])->save();
@@ -102,18 +102,6 @@ class HarikiRelinkCommand extends Command
         }
 
         return self::SUCCESS;
-    }
-
-    /** "275 Diamonds" matches the Hariki offer "275" when exactly one offer has that number. */
-    private function byNumber($offers, string $name): ?ProviderOffer
-    {
-        if (! preg_match('/\d+/', $name, $m)) {
-            return null;
-        }
-
-        $hits = $offers->filter(fn (ProviderOffer $o) => preg_match('/\d+/', $o->name, $n) && $n[0] === $m[0]);
-
-        return $hits->count() === 1 ? $hits->first() : null;
     }
 
     private function normalize(string $name): string

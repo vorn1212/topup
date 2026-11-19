@@ -30,9 +30,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
-        <env name="HARIKI_API_KEY" value=""/>
-        <env name="HARIKI_FAKE" value="false"/>
-        <env name="HARIKI_POLL_GUARD" value="false"/>
-        <env name="HARIKI_FEE_PER_ORDER" value="0"/>
+        <env name="RECHARGEGAMES_API_KEY" value=""/>
+        <env name="RECHARGEGAMES_FAKE" value="false"/>
     </php>
 </phpunit>
