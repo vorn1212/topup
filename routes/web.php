@@ -127,3 +127,7 @@ Route::post('/webhooks/rechargegames', RechargeGamesWebhookController::class)
     ])
     ->middleware('throttle:120,1')
     ->name('webhooks.rechargegames');
+
+
+// Signs a user out when a tab or the browser was closed (see public/kt-session.js).
+\Illuminate\Support\Facades\Route::post('/_session/end', [\App\Http\Middleware\LogoutWhenBrowserCloses::class, 'end'])->name('session.end');

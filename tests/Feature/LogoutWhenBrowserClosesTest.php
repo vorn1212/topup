@@ -18,29 +18,26 @@ class LogoutWhenBrowserClosesTest extends TestCase
         Route::middleware('web')->get('/_page', fn () => response('<html><body>hello</body></html>'));
     }
 
-    public function test_a_guest_page_sets_the_tab_marker_only(): void
+    public function test_a_guest_page_only_gets_the_script_without_the_signed_in_flag(): void
     {
         $html = $this->get('/_page')->assertOk()->getContent();
 
-        $this->assertStringContainsString("setItem('kt_tab','1')", $html);
-        $this->assertStringNotContainsString('_session/end', $html);
+        $this->assertStringContainsString('/kt-session.js', $html);
+        $this->assertStringNotContainsString('data-signed-in', $html);
     }
 
-    public function test_a_signed_in_page_checks_the_marker(): void
+    public function test_a_signed_in_page_is_flagged(): void
     {
         $user = User::factory()->create(['email' => 'real@example.com']);
 
-        $html = $this->actingAs($user)->get('/_page')->getContent();
-
-        $this->assertStringContainsString('_session/end', $html);
-        $this->assertStringContainsString("getItem('kt_tab')", $html);
+        $this->actingAs($user)->get('/_page')->assertSee('data-signed-in="1"', false);
     }
 
     public function test_guest_checkout_accounts_are_left_alone(): void
     {
         $user = User::factory()->create(['email' => 'abc@guest.invalid']);
 
-        $this->actingAs($user)->get('/_page')->assertDontSee('_session/end', false);
+        $this->actingAs($user)->get('/_page')->assertDontSee('data-signed-in', false);
         $this->actingAs($user)->post('/_session/end')->assertNoContent();
         $this->assertAuthenticatedAs($user);
     }
