@@ -98,7 +98,8 @@ class OrderService
                 $price = Money::normalize((string) $product->selling_price);
                 $cost = Money::normalize((string) $product->provider_cost);
 
-                if (Money::cmp($price, '0') <= 0 || Money::cmp($price, $cost) < 0) {
+                // A promotion may sell below the provider cost on purpose, so only a zero price is refused.
+                if (Money::cmp($price, '0') <= 0) {
                     throw new OrderRejectedException('This package is temporarily unavailable.');
                 }
 
