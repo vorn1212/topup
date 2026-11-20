@@ -242,6 +242,11 @@ class RechargeGamesService implements TopUpProvider
 
         $clean = $this->cleanFields($fields);
 
+        // Games set up earlier call the server field zone_id; RechargeGames calls it server_id.
+        if (blank($clean['server_id'] ?? null) && filled($clean['zone_id'] ?? null)) {
+            $clean['server_id'] = $clean['zone_id'];
+        }
+
         foreach (['player_id', 'server_id'] as $key) {
             if (isset($clean[$key]) && $clean[$key] !== '') {
                 $payload[$key] = $clean[$key];
